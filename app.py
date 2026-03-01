@@ -39,14 +39,23 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         password TEXT,
-        role TEXT,
-        name TEXT,
-        roll_no TEXT,
-        branch TEXT,
-        semester TEXT,
-        device_id TEXT
+        role TEXT
     )
     """)
+    # 🩹 Ensure all columns exist (Migration for existing databases)
+    columns = {
+        "name": "TEXT",
+        "roll_no": "TEXT",
+        "branch": "TEXT",
+        "semester": "TEXT",
+        "device_id": "TEXT"
+    }
+    for col_name, col_type in columns.items():
+        try:
+            cur.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass # Column already exists
+    
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS sessions (
