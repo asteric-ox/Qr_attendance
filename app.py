@@ -113,6 +113,12 @@ def init_db():
             with open("students.csv", newline='', encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
+                    # Provide defaults for potentially missing columns
+                    semester = row.get("semester", "N/A")
+                    branch = row.get("branch", "N/A")
+                    name = row.get("name", "N/A")
+                    roll_no = row.get("roll_no", "N/A")
+                    
                     cur.execute("""
                         INSERT OR IGNORE INTO users 
                         (username, password, role, name, roll_no, branch, semester)
@@ -121,10 +127,10 @@ def init_db():
                         row["username"],
                         generate_password_hash(row["password"]),
                         row["role"],
-                        row["name"],
-                        row["roll_no"],
-                        row["branch"],
-                        row["semester"]
+                        name,
+                        roll_no,
+                        branch,
+                        semester
                     ))
             conn.commit()
             print("Student CSV data imported successfully.")
@@ -137,6 +143,11 @@ def init_db():
             with open("faculty.csv", newline='', encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
+                    # Provide defaults for potentially missing columns
+                    semester = row.get("semester", "N/A")
+                    branch = row.get("branch", "N/A")
+                    name = row.get("name", "N/A")
+                    
                     cur.execute("""
                         INSERT OR IGNORE INTO users 
                         (username, password, role, name, branch, semester)
@@ -145,9 +156,9 @@ def init_db():
                         row["username"],
                         generate_password_hash(row["password"]),
                         "faculty",
-                        row["name"],
-                        row["branch"],
-                        row["semester"]
+                        name,
+                        branch,
+                        semester
                     ))
             conn.commit()
             print("Faculty CSV data imported successfully.")
