@@ -83,6 +83,23 @@ def init_db():
     """)
 
     conn.commit()
+
+    # 🚀 Auto-seed default users if database is empty (important for Render)
+    cur.execute("SELECT COUNT(*) FROM users")
+    if cur.fetchone()[0] == 0:
+        print("Seeding default users...")
+        default_users = [
+            ("admin1", generate_password_hash("admin123"), "admin", "Admin User"),
+            ("faculty1", generate_password_hash("faculty123"), "faculty", "Faculty User"),
+            ("student1", generate_password_hash("student123"), "student", "Student User")
+        ]
+        for username, password, role, name in default_users:
+            cur.execute(
+                "INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)",
+                (username, password, role, name)
+            )
+        conn.commit()
+
     conn.close()
 
 init_db()
