@@ -67,9 +67,15 @@ def init_db():
         start_time TEXT,
         latitude REAL,
         longitude REAL,
-        expires_at TEXT
+        expires_at TEXT,
+        radius INTEGER DEFAULT 20
     )
     """)
+    # Migration for sessions radius
+    try:
+        cur.execute("ALTER TABLE sessions ADD COLUMN radius INTEGER DEFAULT 20")
+    except sqlite3.OperationalError:
+        pass
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS attendance (
@@ -293,6 +299,7 @@ def create_session():
     subject = data.get("subject")
     latitude = data.get("latitude")
     longitude = data.get("longitude")
+    radius = data.get("radius", 20)
 
     if latitude is None or longitude is None:
         return jsonify({
@@ -307,10 +314,10 @@ def create_session():
     cur = conn.cursor()
     cur.execute(
         """
-        INSERT INTO sessions (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at, radius)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at)
+        (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at, radius)
     )
     conn.commit()
     session_id = cur.lastrowid
@@ -421,18 +428,18 @@ def mark_attendance():
     # 📍 Geofence Check
     teacher_lat = session["latitude"]
     teacher_lng = session["longitude"]
+    allowed_radius = session.get("radius", 20)
 
     if teacher_lat is not None and student_lat is not None:
         distance = haversine(teacher_lat, teacher_lng, student_lat, student_lng)
         
-        # We strictly enforce 150m for testing, but let's show the user WHY it fails
-        if distance > 150:
+        # We use the radius specified by the faculty (default 20m)
+        if distance > allowed_radius:
             conn.close()
             return jsonify({
                 "success": False, 
                 "message": f"Outside allowed area! Distance: {int(distance)}m. " + 
-                           f"Teacher at: {round(teacher_lat,4)},{round(teacher_lng,4)} | " +
-                           f"You at: {round(student_lat,4)},{round(student_lng,4)}"
+                           f"Max allowed for this session: {allowed_radius}m. "
             }), 403
 
     # Prevent duplicate

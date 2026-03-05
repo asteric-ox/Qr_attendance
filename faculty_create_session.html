@@ -68,6 +68,15 @@
         <input type="text" id="semester" placeholder="Semester (e.g. S6)" />
         <input type="text" id="subject" placeholder="Subject (e.g. Compiler Design)" />
 
+        <div style="text-align: left; margin: 10px 0;">
+            <label style="font-size: 13px; color: #666; font-weight: 600;">Geofence Range</label>
+            <select id="geofence_range">
+                <option value="20">Strict (20 Meters)</option>
+                <option value="200">Campus (200 Meters)</option>
+                <option value="999999">Disable (Testing / Remote)</option>
+            </select>
+        </div>
+
         <button id="startBtn" onclick="requestLocation()">Start Session</button>
         <div id="locationDisplay" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
         <p id="status"></p>
@@ -145,6 +154,7 @@
             const branch = document.getElementById("branch").value;
             const semester = document.getElementById("semester").value;
             const subject = document.getElementById("subject").value;
+            const radius = parseInt(document.getElementById("geofence_range").value);
             const statusMsg = document.getElementById("status");
 
             if (!branch || !semester || !subject) {
@@ -165,7 +175,8 @@
                     semester: semester,
                     subject: subject,
                     latitude: lat,
-                    longitude: lng
+                    longitude: lng,
+                    radius: radius
                 })
             })
                 .then(res => res.json())
