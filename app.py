@@ -429,7 +429,11 @@ def mark_attendance():
     # 📍 Geofence Check
     teacher_lat = session["latitude"]
     teacher_lng = session["longitude"]
-    allowed_radius = session.get("radius", 20)
+    # sqlite3.Row does not support .get(), so we use this pattern:
+    try:
+        allowed_radius = session["radius"] or 20
+    except (IndexError, KeyError):
+        allowed_radius = 20
 
     if teacher_lat is not None and student_lat is not None:
         distance = haversine(teacher_lat, teacher_lng, student_lat, student_lng)
@@ -439,8 +443,7 @@ def mark_attendance():
             conn.close()
             return jsonify({
                 "success": False, 
-                "message": f"Outside allowed area! Distance: {int(distance)}m. " + 
-                           f"Max allowed for this session: {allowed_radius}m. "
+                "message": f"Outside allowed area! Distance: {int(distance)}m. Max allowed: {allowed_radius}m."
             }), 403
 
     # Prevent duplicate
