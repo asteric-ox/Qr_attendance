@@ -26,7 +26,8 @@ jwt = JWTManager(app)
 
 # 🗝️ Encryption for QR codes - Fixed key for persistence
 # We use a fixed key so that if Render restarts, existing QR codes can still be decrypted.
-cipher_suite = Fernet(b'O1_pSjV5Y3FmX3Z0X2JzX3NlY3JldF9rZXlfMTIzNDU2Nzg=')
+# This is a valid 32-byte URL-safe base64 Fernet key.
+cipher_suite = Fernet(b'ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=')
 
 DATABASE = "qr_attendance.db"
 
