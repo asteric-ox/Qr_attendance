@@ -206,7 +206,8 @@
     }
 
     function markAttendance(qrPayload, lat, lng) {
-      fetch(`${API_BASE}/attendance`, {
+      const url = `${API_BASE}/attendance`;
+      fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -228,7 +229,10 @@
             location.reload();
           }
         })
-        .catch(() => alert("Network error."));
+        .catch((err) => {
+          alert(`Network Error!\nURL: ${url}\nError: ${err.message}\nCheck if your phone can reach the server.`);
+          location.reload();
+        });
     }
 
     async function toggleTorch() {
