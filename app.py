@@ -418,18 +418,21 @@ def mark_attendance():
         conn.close()
         return jsonify({"success": False, "message": "QR expired"}), 400
 
-    # 📍 Geofence: Increased to 150 meters for better reliability during testing
+    # 📍 Geofence Check
     teacher_lat = session["latitude"]
     teacher_lng = session["longitude"]
 
     if teacher_lat is not None and student_lat is not None:
         distance = haversine(teacher_lat, teacher_lng, student_lat, student_lng)
-        # We use 150m because laptops often have very inaccurate IP-based location
+        
+        # We strictly enforce 150m for testing, but let's show the user WHY it fails
         if distance > 150:
             conn.close()
             return jsonify({
                 "success": False, 
-                "message": f"You are outside the allowed area (Dist: {int(distance)}m). Max allowed: 150m."
+                "message": f"Outside allowed area! Distance: {int(distance)}m. " + 
+                           f"Teacher at: {round(teacher_lat,4)},{round(teacher_lng,4)} | " +
+                           f"You at: {round(student_lat,4)},{round(student_lng,4)}"
             }), 403
 
     # Prevent duplicate
