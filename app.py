@@ -467,6 +467,58 @@ def mark_attendance():
 
     return jsonify({"success": True, "status": status})
 
+# 📋 Faculty: Get Live Attendance List for a Session
+@app.route("/api/sessions/<int:session_id>/live", methods=["GET"])
+@jwt_required()
+def get_live_attendance(session_id):
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Get session info
+    cur.execute("SELECT * FROM sessions WHERE id=?", (session_id,))
+    session = cur.fetchone()
+    if not session:
+        conn.close()
+        return jsonify({"success": False, "message": "Session not found"}), 404
+
+    # Get all attendance records with student details
+    cur.execute("""
+        SELECT a.student_id, a.status, a.marked_at,
+               u.name, u.roll_no, u.branch, u.semester
+        FROM attendance a
+        JOIN users u ON a.student_id = u.id
+        WHERE a.session_id = ?
+        ORDER BY a.marked_at DESC
+    """, (session_id,))
+    rows = cur.fetchall()
+    conn.close()
+
+    attendance = [dict(r) for r in rows]
+    return jsonify({
+        "success": True,
+        "attendance": attendance,
+        "session": dict(session)
+    })
+
+# 📍 Faculty: Update Session Location (teacher moves around)
+@app.route("/api/sessions/<int:session_id>/location", methods=["PUT"])
+@jwt_required()
+def update_session_location(session_id):
+    data = request.json
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE sessions SET latitude=?, longitude=? WHERE id=?",
+        (latitude, longitude, session_id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
 # --- Faculty Home: Dashboard Info ---
 @app.route("/api/faculty/dashboard", methods=["GET"])
 @jwt_required()
