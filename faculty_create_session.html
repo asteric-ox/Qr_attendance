@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Faculty - Create Session</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background: #f0f2f5;
+            padding-top: 50px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 10px;">
+            <a href="#" onclick="goBack()" style="color: #64748b; text-decoration: none;"><i data-lucide="chevron-left"
+                    style="width: 20px;"></i></a>
+            <h2 style="margin: 0;">Start Attendance</h2>
+        </div>
+        <p>Please ensure GPS is enabled.</p>
+
+        <input type="text" id="branch" placeholder="Branch (e.g. CSE)" />
+        <input type="text" id="semester" placeholder="Semester (e.g. S6)" />
+        <input type="text" id="subject" placeholder="Subject (e.g. Compiler Design)" />
+
+        <div style="text-align: left; margin: 10px 0;">
+            <label style="font-size: 13px; color: #666; font-weight: 600;">Geofence Range</label>
+            <select id="geofence_range">
+                <option value="20">Strict (20 Meters)</option>
+                <option value="200">Campus (200 Meters)</option>
+                <option value="999999">Disable (Testing / Remote)</option>
+            </select>
+        </div>
+
+        <button id="startBtn" onclick="requestLocation()">Start Session</button>
+        <div id="locationDisplay" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+        <p id="status"></p>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+        const API_BASE = window.location.origin + "/api";
+        // In a real app, you get this token from your login page
+        const TOKEN = localStorage.getItem("access_token");
+
+        // --- Auto-fill Logic ---
+        window.onload = () => {
+            const branch = localStorage.getItem('auto_fill_branch');
+            const semester = localStorage.getItem('auto_fill_semester');
+            const subject = localStorage.getItem('auto_fill_subject');
+
+            if (branch) document.getElementById('branch').value = branch;
+            if (semester) document.getElementById('semester').value = semester;
+            if (subject) document.getElementById('subject').value = subject;
+
+            // Clear after use
+            localStorage.removeItem('auto_fill_branch');
+            localStorage.removeItem('auto_fill_semester');
+            localStorage.removeItem('auto_fill_subject');
+
+            if (!branch) tryToSyncWithCurrentPeriod();
+        };
+
+        function goBack() {
+            if (localStorage.getItem("user_role") === "admin") {
+                window.location.href = "admin_dashboard.html";
+            } else {
+                window.location.href = "faculty_home.html";
+            }
+        }
+
+        async function tryToSyncWithCurrentPeriod() {
+            try {
+                const res = await fetch(`${API_BASE}/faculty/current-period`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success && data.period) {
+                    if (confirm(`Detected current period: ${data.period.subject_name}. Fill details?`)) {
+                        document.getElementById('branch').value = data.period.branch;
+                        document.getElementById('semester').value = data.period.semester;
+                        document.getElementById('subject').value = data.period.subject_name;
+                    }
+                }
+            } catch (e) { }
+        }
+
+        function requestLocation() {
+            const statusMsg = document.getElementById("status");
+            const locDisplay = document.getElementById("locationDisplay");
+            statusMsg.innerText = "Requesting GPS Permission...";
+            statusMsg.style.color = "blue";
+
+            if (!navigator.geolocation) {
+                statusMsg.innerText = "Geolocation is not supported by your browser.";
+                statusMsg.style.color = "red";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    locDisplay.innerText = `Current Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    createSession(lat, lng);
+                },
+                (err) => {
+                    statusMsg.innerText = "Error: " + err.message + ". Please enable Location Services.";
+                    statusMsg.style.color = "red";
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        function createSession(lat, lng) {
+            const branch = document.getElementById("branch").value;
+            const semester = document.getElementById("semester").value;
+            const subject = document.getElementById("subject").value;
+            const radius = parseInt(document.getElementById("geofence_range").value);
+            const statusMsg = document.getElementById("status");
+
+            if (!branch || !semester || !subject) {
+                statusMsg.innerText = "Please fill all fields.";
+                return;
+            }
+
+            statusMsg.innerText = "Creating session...";
+
+            fetch(`${API_BASE}/sessions`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${TOKEN}`
+                },
+                body: JSON.stringify({
+                    branch: branch,
+                    semester: semester,
+                    subject: subject,
+                    latitude: lat,
+                    longitude: lng,
+                    radius: radius
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        statusMsg.innerText = "Session Started! Redirecting...";
+                        statusMsg.style.color = "green";
+                        localStorage.setItem("current_session_id", data.session_id);
+                        setTimeout(() => {
+                            window.location.href = "faculty_dashboard.html";
+                        }, 1000);
+                    } else {
+                        statusMsg.innerText = "Error: " + data.message;
+                        statusMsg.style.color = "red";
+                    }
+                })
+                .catch(err => {
+                    statusMsg.innerText = "Server error. Is the backend running?";
+                    statusMsg.style.color = "red";
+                });
+        }
+    </script>
+
+</body>
+
+</html>

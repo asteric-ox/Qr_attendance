@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Timetable | Smart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: #f8fafc;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 10% 10%, #1e1b4b 0%, #0f172a 100%);
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            text-decoration: none;
+        }
+
+        .title-h {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Day Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Timetable List */
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .period-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .time-box {
+            text-align: center;
+            min-width: 80px;
+            border-right: 1px solid var(--glass-border);
+            padding-right: 15px;
+        }
+
+        .time-box span {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .time-box .small {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .details h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .details p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .current-tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-left: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <a href="javascript:history.back()" class="back-btn"><i data-lucide="chevron-left"></i></a>
+        <div class="title-h">Weekly Timetable</div>
+    </div>
+
+    <div class="tabs" id="day-tabs">
+        <div class="tab" onclick="loadDay('Monday')">Mon</div>
+        <div class="tab" onclick="loadDay('Tuesday')">Tue</div>
+        <div class="tab" onclick="loadDay('Wednesday')">Wed</div>
+        <div class="tab" onclick="loadDay('Thursday')">Thu</div>
+        <div class="tab" onclick="loadDay('Friday')">Fri</div>
+        <div class="tab" onclick="loadDay('Saturday')">Sat</div>
+    </div>
+
+    <div class="schedule-list" id="schedule-list">
+        <!-- Content -->
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + "/api";
+        const token = localStorage.getItem("access_token");
+        const role = localStorage.getItem("user_role"); // Admin/Faculty/Student
+
+        let currentRole = role;
+
+        let fullTimetable = [];
+
+        async function init() {
+            lucide.createIcons();
+
+            // Try to sync role first (helps if localStorage is missing it)
+            try {
+                const res = await fetch(`${API_BASE}/whoami`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const userData = await res.json();
+                if (userData.success) {
+                    currentRole = userData.user.role;
+                    localStorage.setItem('user_role', currentRole);
+                    console.log("Verified Role from API:", currentRole);
+                }
+            } catch (e) { console.error("Whoami check failed", e); }
+
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const todayIndex = new Date().getDay();
+            const today = days[todayIndex === 0 ? 1 : todayIndex]; // Default to Mon if Sun
+            console.log("Loading Timetable for:", today);
+
+            // Highlight today's tab
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => {
+                if (t.innerText.toLowerCase() === today.substring(0, 3).toLowerCase()) t.classList.add('active');
+            });
+
+            await fetchTimetable();
+            loadDay(today);
+        }
+
+        async function fetchTimetable() {
+            const endpoint = (currentRole === 'faculty') ? '/api/faculty/timetable' : '/api/student/timetable-full';
+            console.log("Fetching from:", endpoint, "with role", currentRole);
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                console.log("Received full timetable:", data);
+                if (data.success) fullTimetable = data.timetable;
+            } catch (e) { console.error("Fetch failed", e); }
+        }
+
+        function loadDay(day) {
+            // Update UI tabs
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.toggle('active', t.innerText.toLowerCase() === day.substring(0, 3).toLowerCase());
+            });
+
+            const list = document.getElementById('schedule-list');
+            const dayData = fullTimetable.filter(t => t.day_of_week === day);
+
+            if (dayData.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding: 40px; color: #64748b;">No classes scheduled for ' + day + '</p>';
+                return;
+            }
+
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const currentDay = days[now.getDay()];
+
+            list.innerHTML = dayData.map(t => {
+                const isCurrent = (currentTime >= t.start_time && currentTime <= t.end_time && day === currentDay);
+                return `
+                    <div class="period-card">
+                        <div class="time-box">
+                            <span>${t.start_time}</span>
+                            <div class="small">${t.end_time}</div>
+                        </div>
+                        <div class="details">
+                            <h4>${t.subject_name}</h4>
+                            <p>${role === 'faculty' ? (t.branch + " " + t.semester) : t.faculty_name}</p>
+                        </div>
+                        ${isCurrent ? '<div class="current-tag">ACTIVE</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

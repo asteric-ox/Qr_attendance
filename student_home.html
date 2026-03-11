@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Home | Smart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding-bottom: 100px;
+            background-image: radial-gradient(circle at 10% 10%, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        .header {
+            padding: 30px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .greeting {
+            flex: 1;
+        }
+
+        .greeting h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .greeting p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .container {
+            padding: 0 20px;
+        }
+
+        /* Sidebar / Drawer */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sidebar.active {
+            left: 0;
+            box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: white;
+        }
+
+        .nav-link.active i {
+            color: var(--primary);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .logout-link {
+            margin-top: auto;
+            color: #ef4444 !important;
+        }
+
+        .logout-link:hover {
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        /* Stats Card */
+        .main-stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 28px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-content h2 {
+            font-size: 32px;
+            margin-bottom: 4px;
+        }
+
+        .stat-content p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .attendance-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Timetable List */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .list-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 16px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .item-text h4 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .item-text p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            height: 60px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 15px 30px var(--primary-glow);
+            text-decoration: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo"><i data-lucide="qr-code"></i></div>
+            <div style="font-weight: 700; font-size: 18px;">Smart QR</div>
+        </div>
+
+        <div class="nav-links">
+            <a href="student_home.html" class="nav-link active">
+                <i data-lucide="layout-dashboard"></i> My Dashboard
+            </a>
+            <a href="timetable.html" class="nav-link">
+                <i data-lucide="calendar"></i> Weekly Timetable
+            </a>
+            <a href="student_scan.html" class="nav-link">
+                <i data-lucide="scan"></i> Scan Attendance
+            </a>
+            <a href="#" class="nav-link">
+                <i data-lucide="bar-chart-3"></i> Attendance Report
+            </a>
+
+            <a href="login.html" class="nav-link logout-link">
+                <i data-lucide="log-out"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="header">
+        <button class="menu-btn" onclick="toggleMenu()">
+            <i data-lucide="menu" style="width: 28px; height: 28px;"></i>
+        </button>
+        <div class="greeting">
+            <p>Hello,</p>
+            <h1 id="student-name">Student</h1>
+        </div>
+        <div class="user-avatar" id="avatar-initial">S</div>
+    </div>
+
+    <div class="container">
+        <!-- Main Stats -->
+        <div class="main-stat-card">
+            <div class="stat-content">
+                <p>Overall Attendance</p>
+                <h2 id="overall-perc">--</h2>
+                <div style="color: var(--success); font-size: 12px; font-weight: 600;">↑ 2.4% from last week</div>
+            </div>
+            <div class="attendance-circle" id="circle-perc">--</div>
+        </div>
+
+        <!-- Today's Classes -->
+        <div class="section-title">
+            Today's Schedule
+            <i data-lucide="calendar" style="color: var(--primary); width: 20px;"></i>
+        </div>
+        <div class="item-list" id="timetable-list">
+            <p style="text-align:center; color:#64748b; padding: 20px;">Loading schedule...</p>
+        </div>
+    </div>
+
+    <a href="student_scan.html" class="fab">
+        <i data-lucide="scan"></i>
+        Mark My Attendance
+    </a>
+
+    <script>
+        const API_BASE = window.location.origin + "/api";
+        const token = localStorage.getItem("access_token");
+        const userName = localStorage.getItem("user_name") || "Student";
+
+        if (!token) window.location.href = 'login.html';
+
+        document.getElementById('student-name').innerText = userName;
+        document.getElementById('avatar-initial').innerText = userName[0];
+        lucide.createIcons();
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            lucide.createIcons();
+        }
+
+        async function loadData() {
+            try {
+                // Fetch student stats
+                const statRes = await fetch(`${API_BASE}/student/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const statData = await statRes.json();
+                if (statData.success) {
+                    const perc = Math.round(statData.stats.overall_percentage);
+                    document.getElementById('overall-perc').innerText = perc + "%";
+                    document.getElementById('circle-perc').innerText = perc + "%";
+                }
+
+                // Fetch timetable
+                const timeRes = await fetch(`${API_BASE}/student/timetable`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const timeData = await timeRes.json();
+                if (timeData.success) {
+                    const list = document.getElementById('timetable-list');
+                    if (timeData.timetable.length > 0) {
+                        list.innerHTML = '';
+                        timeData.timetable.forEach(t => {
+                            list.innerHTML += `
+                                <div class="list-item">
+                                    <div class="item-info">
+                                        <div class="item-icon"><i data-lucide="book-open"></i></div>
+                                        <div class="item-text">
+                                            <h4>${t.subject_name}</h4>
+                                            <p>${t.start_time} - ${t.end_time} • ${t.faculty_name}</p>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="clock" style="color: #64748b; width: 16px;"></i>
+                                </div>
+                            `;
+                        });
+                        lucide.createIcons();
+                    } else {
+                        list.innerHTML = '<p style="text-align:center; color:#64748b; padding: 20px;">No classes today!</p>';
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>

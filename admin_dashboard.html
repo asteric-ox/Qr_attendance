@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #020617;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 50px;
+            padding: 0 10px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+        }
+
+        .nav-item.active i {
+            color: var(--primary);
+        }
+
+        .user-profile {
+            margin-top: auto;
+            padding: 20px 10px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            overflow: hidden;
+        }
+
+        /* Main Content Styling */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 24px 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header-title p {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .content-body {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        /* Dashboard Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-card i {
+            color: var(--primary);
+        }
+
+        .stat-card h3 {
+            color: var(--text-dim);
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .val {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Outfit';
+        }
+
+        /* Tables */
+        .card-table {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 16px 24px;
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-student {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        .badge-faculty {
+            background: rgba(168, 85, 247, 0.1);
+            color: #c084fc;
+        }
+
+        .badge-admin {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--text-main);
+        }
+
+        .btn-icon.delete:hover {
+            color: var(--danger);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal h2 {
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: white;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Tab Visibility */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-box"><i data-lucide="qr-code" stroke="white"></i></div>
+                <div class="logo-text">ADMIN</div>
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item active" onclick="switchTab('overview')">
+                    <i data-lucide="layout-dashboard"></i> Overview
+                </li>
+                <li class="nav-item" onclick="switchTab('users')">
+                    <i data-lucide="users"></i> User Management
+                </li>
+                <li class="nav-item" onclick="switchTab('faculty_dash')">
+                    <i data-lucide="presentation"></i> Faculty Dashboard
+                </li>
+                <li class="nav-item" onclick="switchTab('student_att')">
+                    <i data-lucide="clipboard-list"></i> Student Attendance
+                </li>
+                <li class="nav-item" onclick="switchTab('subjects')">
+                    <i data-lucide="book-open"></i> Subject Registry
+                </li>
+                <li class="nav-item" onclick="switchTab('reports')">
+                    <i data-lucide="bar-chart-3"></i> Attendance Reports
+                </li>
+            </ul>
+
+            <div class="user-profile">
+                <div class="avatar">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Admin">
+                </div>
+                <div class="user-info">
+                    <div id="adminName" style="font-weight: 600; font-size: 14px;">Master Admin</div>
+                    <div style="color: var(--text-dim); font-size: 12px; cursor: pointer;" onclick="logout()">Sign Out
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <header>
+                <div class="header-title">
+                    <h2 id="currentTabTitle">System Overview</h2>
+                    <p id="currentTabSub">Live metrics and system status at a glance.</p>
+                </div>
+                <div style="display: flex; gap: 10px; margin-left: auto; margin-right: 20px;">
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button class="btn-primary" style="background: rgba(255,255,255,0.05); color: white;">
+                            <i data-lucide="user-plus"></i> Register Users <i data-lucide="chevron-down"
+                                style="width: 14px;"></i>
+                        </button>
+                        <div class="dropdown-content"
+                            style="display: none; position: absolute; top: 100%; left: 0; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 190px; z-index: 100;">
+                            <a href="#"
+                                style="display: block; padding: 12px 16px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05);"
+                                onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+                                onmouseout="this.style.background='none'"
+                                onclick="switchTab('users'); setTimeout(() => { filterUsers('faculty'); openModal('userModal'); document.getElementById('u_role').value='faculty'; updateRoleFields(); }, 100)">Register
+                                Faculty</a>
+                            <a href="#" style="display: block; padding: 12px 16px; color: white; text-decoration: none;"
+                                onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+                                onmouseout="this.style.background='none'"
+                                onclick="switchTab('users'); setTimeout(() => { filterUsers('student'); openModal('userModal'); document.getElementById('u_role').value='student'; updateRoleFields(); }, 100)">Register
+                                Student</a>
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="background: rgba(255,255,255,0.05); color: white;"
+                        onclick="switchTab('subjects')"><i data-lucide="book-open"></i> Manage Courses</button>
+                    <button class="btn-primary"
+                        style="background: transparent; border: 1px solid var(--primary); color: white;"
+                        onclick="openModal('passwordModal')"><i data-lucide="key" style="color: var(--primary);"></i>
+                        Change Password</button>
+                </div>
+
+                <div class="header-actions" id="tabSpecificActions">
+                    <!-- Actions injected here based on tab -->
+                </div>
+            </header>
+
+            <div class="content-body" id="mainDisplay">
+
+                <!-- OVERVIEW TAB -->
+                <div id="overview" class="tab-content active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i data-lucide="users"></i>
+                            <h3>Total Registered</h3>
+                            <div class="val" id="countTotal">..</div>
+                        </div>
+                        <div class="stat-card">
+                            <i data-lucide="graduation-cap"></i>
+                            <h3>Students</h3>
+                            <div class="val" id="countStudents">..</div>
+                        </div>
+                        <div class="stat-card">
+                            <i data-lucide="user-cog"></i>
+                            <h3>Faculty</h3>
+                            <div class="val" id="countFaculty">..</div>
+                        </div>
+                        <div class="stat-card">
+                            <i data-lucide="library"></i>
+                            <h3>Subjects</h3>
+                            <div class="val" id="countSubjects">..</div>
+                        </div>
+                    </div>
+
+                    <div class="card-table">
+                        <div class="table-header">
+                            <h3>Recently Registered Users</h3>
+                            <button class="btn-primary" onclick="switchTab('users')">View All</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NAME</th>
+                                    <th>USERNAME</th>
+                                    <th>ROLE</th>
+                                    <th>DEPARTMENT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentUsersTable">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- USERS TAB -->
+                <div id="users" class="tab-content">
+                    <div style="display:flex; justify-content:center; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn-primary" style="background:var(--primary)" id="filter-all"
+                            onclick="filterUsers('all')">All</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-student" onclick="filterUsers('student')">Students</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-faculty" onclick="filterUsers('faculty')">Faculty</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-admin" onclick="filterUsers('admin')">Admins</button>
+                    </div>
+
+                    <div class="card-table">
+                        <div class="table-header">
+                            <h3>User Management</h3>
+                            <button class="btn-primary" onclick="openModal('userModal')"><i data-lucide="plus"></i> Add
+                                User</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>NAME</th>
+                                    <th>ROLE</th>
+                                    <th>BRANCH</th>
+                                    <th>ROLL NO / SEM</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullUsersTable">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FACULTY DASHBOARD TAB -->
+                <div id="faculty_dash" class="tab-content">
+                    <div class="stats-grid" style="grid-template-columns: 1fr; max-width: 600px; margin: 0 auto 30px;">
+                        <div class="stat-card"
+                            style="align-items: center; text-align: center; background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3);">
+                            <i data-lucide="qr-code" style="width: 48px; height: 48px; margin-bottom: 10px;"></i>
+                            <h3>Start New Live Attendance</h3>
+                            <p
+                                style="font-size:13px; color:var(--text-dim); margin: 8px 0; max-width: 400px; line-height: 1.5;">
+                                Act as a faculty member to initiate a QR code session. Students scan the code to mark
+                                attendance.</p>
+                            <a href="faculty_create_session.html"
+                                style="text-decoration:none; display:inline-block;"><button class="btn-primary"
+                                    style="margin-top: 10px;">Create QR Session</button></a>
+                        </div>
+                    </div>
+
+                    <div class="card-table" style="max-width: 900px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>Currently Active Faculty Sessions</h3>
+                            <button class="btn-primary" onclick="loadActiveSessions()">↻ Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>SUBJECT</th>
+                                    <th>FACULTY</th>
+                                    <th>BRANCH / SEM</th>
+                                    <th>CREATED AT</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeFacultySessionsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- STUDENT ATTENDANCE TAB -->
+                <div id="student_att" class="tab-content">
+                    <div style="display:flex; gap:12px; max-width:900px; margin: 0 auto 20px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Branch</label>
+                            <input type="text" id="attFilterBranch" placeholder="e.g. CSE"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Semester</label>
+                            <input type="text" id="attFilterSemester" placeholder="e.g. S6"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div>
+                            <button class="btn-primary" onclick="loadAllStudentAttendance()"
+                                style="padding: 10px 20px; margin-bottom: 2px;">Apply Filter</button>
+                        </div>
+                    </div>
+
+                    <div class="card-table" style="max-width: 900px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>Student Attendance Data</h3>
+                            <button class="btn-primary" onclick="loadAllStudentAttendance()">↻ Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ROLL NO</th>
+                                    <th>NAME</th>
+                                    <th>BRANCH / SEM</th>
+                                    <th>CLASSES ATTENDED</th>
+                                    <th>PERCENTAGE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentAttTable">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUBJECTS TAB -->
+                <div id="subjects" class="tab-content">
+                    <div style="display:flex; gap:12px; max-width:900px; margin: 0 auto 20px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Branch</label>
+                            <input type="text" id="subjFilterBranch" placeholder="e.g. CSE"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Semester</label>
+                            <input type="text" id="subjFilterSemester" placeholder="e.g. S6"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div>
+                            <button class="btn-primary" onclick="loadSubjects()"
+                                style="padding: 10px 20px; margin-bottom: 2px;">Apply Filter</button>
+                        </div>
+                    </div>
+
+                    <div class="card-table" style="max-width: 900px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>Subject Registry</h3>
+                            <button class="btn-primary" onclick="openModal('subjectModal')"><i data-lucide="plus"></i>
+                                Add Subject</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>CODE</th>
+                                    <th>SUBJECT NAME</th>
+                                    <th>STREAM</th>
+                                    <th>SEMESTER</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subjectsTable">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REPORTS TAB -->
+                <div id="reports" class="tab-content">
+                    <!-- Download CSV card -->
+                    <div class="stats-grid"
+                        style="grid-template-columns: 1fr 1fr; max-width: 800px; margin: 0 auto 30px;">
+                        <div class="stat-card" style="align-items: center; text-align: center;">
+                            <i data-lucide="calendar" style="width: 48px; height: 48px;"></i>
+                            <h3>Weekly Report</h3>
+                            <p style="font-size:13px; color:var(--text-dim); margin: 8px 0;">Last 7 days</p>
+                            <button class="btn-primary" style="margin-top: 10px;" onclick="exportReport('weekly')">⬇
+                                Download CSV</button>
+                        </div>
+                        <div class="stat-card" style="align-items: center; text-align: center;">
+                            <i data-lucide="calendar-days" style="width: 48px; height: 48px;"></i>
+                            <h3>Monthly Report</h3>
+                            <p style="font-size:13px; color:var(--text-dim); margin: 8px 0;">Last 30 days</p>
+                            <button class="btn-primary" style="margin-top: 10px;" onclick="exportReport('monthly')">⬇
+                                Download CSV</button>
+                        </div>
+                    </div>
+
+                    <!-- Filter row -->
+                    <div style="display:flex; gap:12px; max-width:800px; margin: 0 auto 20px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Branch</label>
+                            <input type="text" id="reportBranch" placeholder="e.g. CSE"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Semester</label>
+                            <input type="text" id="reportSemester" placeholder="e.g. S6"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                    </div>
+
+                    <!-- Sessions table -->
+                    <div class="card-table" style="max-width:800px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>All Attendance Sessions</h3>
+                            <button class="btn-primary" onclick="loadAttendanceSessions()">↻ Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Faculty</th>
+                                    <th>Branch / Sem</th>
+                                    <th>Date & Time</th>
+                                    <th>Present</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceSessionsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: ADD USER -->
+    <div id="userModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Register New User</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="u_name" placeholder="John Doe" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="u_username" placeholder="john.doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="u_password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="u_role">
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <input type="text" id="u_branch" placeholder="CSE">
+                    </div>
+                    <div class="form-group">
+                        <label id="u_roll_label">Roll No / Sems</label>
+                        <input type="text" id="u_roll" placeholder="NIE23CS01">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn-primary" style="background: var(--bg-card);"
+                        onclick="closeModal('userModal')">Cancel</button>
+                    <button type="submit" class="btn-primary" style="flex-grow: 1; justify-content: center;">Save
+                        User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function updateRoleFields() {
+            const role = document.getElementById('u_role').value;
+            const rollLabel = document.getElementById('u_roll_label');
+            const rollInput = document.getElementById('u_roll');
+            if (role === 'student') {
+                rollLabel.innerText = 'Roll No / Sems';
+                rollInput.placeholder = 'NIE23CS01';
+                rollInput.type = 'text';
+            } else {
+                rollLabel.innerText = 'Email Address';
+                rollInput.placeholder = 'email@university.edu';
+                rollInput.type = 'email';
+            }
+        }
+
+        // Let's attach an event listener so if they change it manually in the modal
+        document.getElementById('u_role').addEventListener('change', updateRoleFields);
+    </script>
+
+    <!-- MODAL: ADD SUBJECT -->
+    <div id="subjectModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Add Subject</h2>
+            <form id="subjectForm">
+                <div class="form-group">
+                    <label>Subject Code</label>
+                    <input type="text" id="s_code" placeholder="CS601" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject Name</label>
+                    <input type="text" id="s_name" placeholder="Artificial Intelligence" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <select id="s_branch" required>
+                            <option value="" disabled selected>Select Branch</option>
+                            <option value="CSE">CSE</option>
+                            <option value="ECE">ECE</option>
+                            <option value="EEE">EEE</option>
+                            <option value="MECH">MECH</option>
+                            <option value="CIVIL">CIVIL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select id="s_semester" required>
+                            <option value="" disabled selected>Select Sem</option>
+                            <option value="S1">S1</option>
+                            <option value="S2">S2</option>
+                            <option value="S3">S3</option>
+                            <option value="S4">S4</option>
+                            <option value="S5">S5</option>
+                            <option value="S6">S6</option>
+                            <option value="S7">S7</option>
+                            <option value="S8">S8</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn-primary" style="background: var(--bg-card);"
+                        onclick="closeModal('subjectModal')">Cancel</button>
+                    <button type="submit" class="btn-primary" style="flex-grow: 1; justify-content: center;">Add
+                        Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CHANGE PASSWORD -->
+    <div id="passwordModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Change Password</h2>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="current_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="new_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirm_password" placeholder="••••••••" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn-primary" style="background: var(--bg-card);"
+                        onclick="closeModal('passwordModal')">Cancel</button>
+                    <button type="submit" class="btn-primary" style="flex-grow: 1; justify-content: center;">Update
+                        Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + "/api";
+        const TOKEN = localStorage.getItem('access_token');
+
+        // Redirect if not logged in or not admin
+        if (!TOKEN) window.location.href = 'login.html';
+
+        lucide.createIcons();
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            const titles = {
+                overview: ["System Overview", "Live metrics and system status at a glance."],
+                users: ["User Management", "Analyze, search, and manage platform participants."],
+                faculty_dash: ["Faculty Dashboard", "Faculty controls and active live sessions."],
+                student_att: ["Student Attendance Data", "Overall attendance tracking for all students."],
+                subjects: ["Subject Registry", "Maintain the central catalogue of academic subjects."],
+                reports: ["Attendance Reports", "Export data for academic validation and logging."]
+            };
+
+            document.getElementById('currentTabTitle').innerText = titles[tabId][0];
+            document.getElementById('currentTabSub').innerText = titles[tabId][1];
+
+            if (tabId === 'overview') loadOverview();
+            if (tabId === 'users') loadUsers();
+            if (tabId === 'faculty_dash') loadActiveSessions();
+            if (tabId === 'student_att') loadAllStudentAttendance();
+            if (tabId === 'subjects') loadSubjects();
+            if (tabId === 'reports') loadAttendanceSessions();
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- DATA FETCHING ---
+
+        async function loadOverview() {
+            const res = await fetch(`${API_BASE}/admin/users`, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const users = data.users;
+                document.getElementById('countTotal').innerText = data.pagination.total_users;
+                document.getElementById('countStudents').innerText = users.filter(u => u.role === 'student').length;
+                document.getElementById('countFaculty').innerText = users.filter(u => u.role === 'faculty').length;
+
+                // Load recent table
+                const table = document.getElementById('recentUsersTable');
+                table.innerHTML = users.slice(0, 5).map(u => `
+                    <tr>
+                        <td><div style="font-weight:600">${u.name || 'N/A'}</div></td>
+                        <td>${u.username}</td>
+                        <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
+                        <td>${u.branch || '--'}</td>
+                    </tr>
+                `).join('');
+            }
+            // Fetch subjects count separately
+            const sRes = await fetch(`${API_BASE}/admin/subjects`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+            const sData = await sRes.json();
+            if (sData.success) document.getElementById('countSubjects').innerText = sData.subjects.length;
+        }
+
+        function renderUserTable(usersToRender) {
+            const table = document.getElementById('fullUsersTable');
+            table.innerHTML = usersToRender.map(u => `
+                <tr>
+                    <td><div style="font-weight:600; font-size: 15px;">${u.name || 'Unnamed'}</div><div style="font-size:12px;color:var(--text-dim)">@${u.username}</div></td>
+                    <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
+                    <td>${u.branch || 'None'}</td>
+                    <td style="font-family: monospace">${u.roll_no || u.semester || '--'}</td>
+                    <td style="display: flex; gap: 10px;">
+                        ${u.role === 'student' ? `<button class="btn-icon" title="Reset Device Link" onclick="resetDevice(${u.id})"><i data-lucide="shield-off"></i></button>` : ''}
+                        <button class="btn-icon delete" title="Delete User" onclick="deleteUser(${u.id})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+
+            // Adjust table header dynamically if we filter purely by faculty
+            const rollHeader = document.querySelector('#users table thead tr th:nth-child(4)');
+            if (rollHeader) {
+                const currentFilter = document.querySelector('.btn-primary[style*="background: var(--primary)"]')?.id;
+                if (currentFilter === 'filter-faculty' || currentFilter === 'filter-admin') {
+                    rollHeader.innerText = 'EMAIL ADDRESS';
+                } else {
+                    rollHeader.innerText = 'ROLL NO / SEM';
+                }
+            }
+        }
+
+        async function loadUsers() {
+            const res = await fetch(`${API_BASE}/admin/users?per_page=100`, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.allUsers = data.users; // Store to filter later
+                filterUsers('all');
+            }
+        }
+
+        function filterUsers(role) {
+            // Update button styles
+            ['all', 'student', 'faculty', 'admin'].forEach(r => {
+                const btn = document.getElementById('filter-' + r);
+                if (btn) {
+                    btn.style.background = (r === role) ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+                }
+            });
+
+            if (!window.allUsers) return;
+
+            if (role === 'all') {
+                renderUserTable(window.allUsers);
+            } else {
+                renderUserTable(window.allUsers.filter(u => u.role === role));
+            }
+        }
+
+        async function loadSubjects() {
+            const branch = document.getElementById('subjFilterBranch')?.value || '';
+            const semester = document.getElementById('subjFilterSemester')?.value || '';
+
+            let url = `${API_BASE}/admin/subjects`;
+            let params = new URLSearchParams();
+            if (branch) params.append('branch', branch);
+            if (semester) params.append('semester', semester);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const table = document.getElementById('subjectsTable');
+                table.innerHTML = data.subjects.length > 0 ? data.subjects.map(s => `
+                    <tr>
+                        <td style="font-weight:700; color: var(--primary-light)">${s.code}</td>
+                        <td>${s.name}</td>
+                        <td>${s.branch}</td>
+                        <td>${s.semester}</td>
+                        <td><button class="btn-icon delete" title="Delete Subject" onclick="deleteSubject(${s.id})"><i data-lucide="trash-2"></i></button></td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No subjects found matching the criteria.</td></tr>';
+                lucide.createIcons();
+            }
+        }
+
+        // --- FORM SUBMISSIONS ---
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const role = document.getElementById('u_role').value;
+            // Depending on role, the u_roll input might contain email vs roll number.
+            const rollOrEmail = document.getElementById('u_roll').value;
+
+            const body = {
+                username: document.getElementById('u_username').value,
+                password: document.getElementById('u_password').value,
+                role: role,
+                name: document.getElementById('u_name').value,
+                branch: document.getElementById('u_branch').value,
+                roll_no: rollOrEmail, // Just passing it as roll_no to backend for simplicity since backend DB is flexible
+                semester: role === 'student' ? 'S6' : null
+            };
+
+            const res = await fetch(`${API_BASE}/admin/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('userModal');
+                loadUsers();
+                e.target.reset();
+            } else alert(data.message);
+        });
+
+        document.getElementById('subjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                code: document.getElementById('s_code').value,
+                name: document.getElementById('s_name').value,
+                branch: document.getElementById('s_branch').value,
+                semester: document.getElementById('s_semester').value
+            };
+
+            const res = await fetch(`${API_BASE}/admin/subjects`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('subjectModal');
+                document.getElementById('subjectForm').reset();
+                loadSubjects();
+            } else {
+                alert(data.message);
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pw0 = document.getElementById('current_password').value;
+            const pw1 = document.getElementById('new_password').value;
+            const pw2 = document.getElementById('confirm_password').value;
+            if (pw1 !== pw2) {
+                alert("Passwords do not match!");
+                return;
+            }
+            const res = await fetch(`${API_BASE}/admin/change-password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+                body: JSON.stringify({ current_password: pw0, new_password: pw1 })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Password successfully changed. You will now be logged out.");
+                closeModal('passwordModal');
+                logout();
+            } else {
+                alert(data.message);
+            }
+        });
+
+        async function deleteUser(id) {
+            if (!confirm("Are you sure you want to remove this user? This action is permanent.")) return;
+            const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) loadUsers();
+            else alert(data.message);
+        }
+
+        async function deleteSubject(id) {
+            if (!confirm("Are you sure you want to delete this subject?")) return;
+            const res = await fetch(`${API_BASE}/admin/subjects/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) loadSubjects();
+            else alert(data.message);
+        }
+
+        async function resetDevice(id) {
+            if (!confirm("Are you sure you want to reset the device binding for this student? They will be able to login from a new device.")) return;
+            const res = await fetch(`${API_BASE}/admin/users/${id}/reset-device`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Device binding reset successfully.");
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function loadAttendanceSessions() {
+            const tbody = document.getElementById('attendanceSessionsTable');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/admin/attendance`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success && data.sessions.length > 0) {
+                    tbody.innerHTML = data.sessions.map(s => `
+                        <tr>
+                            <td>${s.subject || '-'}</td>
+                            <td>${s.faculty_name || 'Unknown'}</td>
+                            <td>${s.branch} ${s.semester}</td>
+                            <td>${s.start_time ? new Date(s.start_time).toLocaleString() : '-'}</td>
+                            <td><span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;font-weight:700;">${s.present_count} present</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No sessions found yet.</td></tr>';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load. Check connection.</td></tr>';
+            }
+        }
+
+        async function loadActiveSessions() {
+            const tbody = document.getElementById('activeFacultySessionsTable');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/admin/attendance`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const now = new Date();
+                    const activeSessions = data.sessions.filter(s => new Date(s.expires_at) > now);
+                    if (activeSessions.length > 0) {
+                        tbody.innerHTML = activeSessions.map(s => `
+                            <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.05)'" onmouseleave="this.style.background='none'" onclick="viewLiveSession(${s.id})">
+                                <td><div style="font-weight:600">${s.subject || '-'}</div></td>
+                                <td>${s.faculty_name || 'Unknown'}</td>
+                                <td>${s.branch} ${s.semester}</td>
+                                <td>${s.start_time ? new Date(s.start_time).toLocaleTimeString() : '-'}</td>
+                                <td><span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:20px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
+                                    <span style="display:inline-block;width:6px;height:6px;background:#10b981;border-radius:50%;box-shadow:0 0 5px #10b981;"></span>
+                                    LIVE (${s.present_count})
+                                </span></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No active sessions at the moment.</td></tr>';
+                    }
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load active sessions.</td></tr>';
+            }
+        }
+
+        function viewLiveSession(sessionId) {
+            localStorage.setItem("current_session_id", sessionId);
+            window.location.href = "faculty_dashboard.html";
+        }
+
+        async function loadAllStudentAttendance() {
+            const tbody = document.getElementById('studentAttTable');
+            const branch = document.getElementById('attFilterBranch')?.value || '';
+            const semester = document.getElementById('attFilterSemester')?.value || '';
+
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td></tr>';
+            try {
+                let url = `${API_BASE}/admin/all_student_attendance`;
+                let params = new URLSearchParams();
+                if (branch) params.append('branch', branch);
+                if (semester) params.append('semester', semester);
+
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success && data.students.length > 0) {
+                    tbody.innerHTML = data.students.map(s => {
+                        let color = s.percentage < 75 ? 'var(--danger)' : '#10b981';
+                        return `
+                        <tr>
+                            <td><div style="font-weight:700; font-family:monospace">${s.roll_no || '-'}</div></td>
+                            <td>${s.name}</td>
+                            <td>${s.branch} ${s.semester}</td>
+                            <td>${s.present_count} / ${s.total_sessions}</td>
+                            <td><span style="background:rgba(255,255,255,0.05);color:${color};padding:3px 10px;border-radius:20px;font-weight:700;">${s.percentage}%</span></td>
+                        </tr>
+                    `}).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No student data found.</td></tr>';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load. View console for details.</td></tr>';
+            }
+        }
+
+        async function exportReport(period) {
+            const branch = document.getElementById('reportBranch')?.value || '';
+            const semester = document.getElementById('reportSemester')?.value || '';
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/reports/export`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+                    body: JSON.stringify({ branch, semester, period })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `attendance_${period}_report.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert("Failed to generate report. Ensure sessions exist for the selected period.");
+                }
+            } catch (e) {
+                alert("Network error generating report: " + e.message);
+            }
+        }
+
+        // Initialize
+        loadOverview();
+    </script>
+</body>
+
+</html>
