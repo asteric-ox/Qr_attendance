@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Command Center | QR Attendance</title>
+    <title>QR Attendance Admin Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -364,6 +364,10 @@
                 opacity: 1;
             }
         }
+
+        .dropdown:hover .dropdown-content {
+            display: block !important;
+        }
     </style>
 </head>
 
@@ -374,7 +378,7 @@
         <aside class="sidebar">
             <div class="logo-area">
                 <div class="logo-box"><i data-lucide="qr-code" stroke="white"></i></div>
-                <div class="logo-text">QR ADMIN</div>
+                <div class="logo-text">ADMIN</div>
             </div>
 
             <ul class="nav-links">
@@ -383,6 +387,12 @@
                 </li>
                 <li class="nav-item" onclick="switchTab('users')">
                     <i data-lucide="users"></i> User Management
+                </li>
+                <li class="nav-item" onclick="switchTab('faculty_dash')">
+                    <i data-lucide="presentation"></i> Faculty Dashboard
+                </li>
+                <li class="nav-item" onclick="switchTab('student_att')">
+                    <i data-lucide="clipboard-list"></i> Student Attendance
                 </li>
                 <li class="nav-item" onclick="switchTab('subjects')">
                     <i data-lucide="book-open"></i> Subject Registry
@@ -411,6 +421,35 @@
                     <h2 id="currentTabTitle">System Overview</h2>
                     <p id="currentTabSub">Live metrics and system status at a glance.</p>
                 </div>
+                <div style="display: flex; gap: 10px; margin-left: auto; margin-right: 20px;">
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button class="btn-primary" style="background: rgba(255,255,255,0.05); color: white;">
+                            <i data-lucide="user-plus"></i> Register Users <i data-lucide="chevron-down"
+                                style="width: 14px;"></i>
+                        </button>
+                        <div class="dropdown-content"
+                            style="display: none; position: absolute; top: 100%; left: 0; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 190px; z-index: 100;">
+                            <a href="#"
+                                style="display: block; padding: 12px 16px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05);"
+                                onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+                                onmouseout="this.style.background='none'"
+                                onclick="switchTab('users'); setTimeout(() => { filterUsers('faculty'); openModal('userModal'); document.getElementById('u_role').value='faculty'; updateRoleFields(); }, 100)">Register
+                                Faculty</a>
+                            <a href="#" style="display: block; padding: 12px 16px; color: white; text-decoration: none;"
+                                onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+                                onmouseout="this.style.background='none'"
+                                onclick="switchTab('users'); setTimeout(() => { filterUsers('student'); openModal('userModal'); document.getElementById('u_role').value='student'; updateRoleFields(); }, 100)">Register
+                                Student</a>
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="background: rgba(255,255,255,0.05); color: white;"
+                        onclick="switchTab('subjects')"><i data-lucide="book-open"></i> Manage Courses</button>
+                    <button class="btn-primary"
+                        style="background: transparent; border: 1px solid var(--primary); color: white;"
+                        onclick="openModal('passwordModal')"><i data-lucide="key" style="color: var(--primary);"></i>
+                        Change Password</button>
+                </div>
+
                 <div class="header-actions" id="tabSpecificActions">
                     <!-- Actions injected here based on tab -->
                 </div>
@@ -466,6 +505,17 @@
 
                 <!-- USERS TAB -->
                 <div id="users" class="tab-content">
+                    <div style="display:flex; justify-content:center; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn-primary" style="background:var(--primary)" id="filter-all"
+                            onclick="filterUsers('all')">All</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-student" onclick="filterUsers('student')">Students</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-faculty" onclick="filterUsers('faculty')">Faculty</button>
+                        <button class="btn-primary" style="background:rgba(255,255,255,0.05); color:white"
+                            id="filter-admin" onclick="filterUsers('admin')">Admins</button>
+                    </div>
+
                     <div class="card-table">
                         <div class="table-header">
                             <h3>User Management</h3>
@@ -489,8 +539,109 @@
                     </div>
                 </div>
 
+                <!-- FACULTY DASHBOARD TAB -->
+                <div id="faculty_dash" class="tab-content">
+                    <div class="stats-grid" style="grid-template-columns: 1fr; max-width: 600px; margin: 0 auto 30px;">
+                        <div class="stat-card"
+                            style="align-items: center; text-align: center; background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3);">
+                            <i data-lucide="qr-code" style="width: 48px; height: 48px; margin-bottom: 10px;"></i>
+                            <h3>Start New Live Attendance</h3>
+                            <p
+                                style="font-size:13px; color:var(--text-dim); margin: 8px 0; max-width: 400px; line-height: 1.5;">
+                                Act as a faculty member to initiate a QR code session. Students scan the code to mark
+                                attendance.</p>
+                            <a href="faculty_create_session.html"
+                                style="text-decoration:none; display:inline-block;"><button class="btn-primary"
+                                    style="margin-top: 10px;">Create QR Session</button></a>
+                        </div>
+                    </div>
+
+                    <div class="card-table" style="max-width: 900px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>Currently Active Faculty Sessions</h3>
+                            <button class="btn-primary" onclick="loadActiveSessions()">↻ Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>SUBJECT</th>
+                                    <th>FACULTY</th>
+                                    <th>BRANCH / SEM</th>
+                                    <th>CREATED AT</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeFacultySessionsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- STUDENT ATTENDANCE TAB -->
+                <div id="student_att" class="tab-content">
+                    <div style="display:flex; gap:12px; max-width:900px; margin: 0 auto 20px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Branch</label>
+                            <input type="text" id="attFilterBranch" placeholder="e.g. CSE"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Semester</label>
+                            <input type="text" id="attFilterSemester" placeholder="e.g. S6"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div>
+                            <button class="btn-primary" onclick="loadAllStudentAttendance()"
+                                style="padding: 10px 20px; margin-bottom: 2px;">Apply Filter</button>
+                        </div>
+                    </div>
+
+                    <div class="card-table" style="max-width: 900px; margin: 0 auto;">
+                        <div class="table-header">
+                            <h3>Student Attendance Data</h3>
+                            <button class="btn-primary" onclick="loadAllStudentAttendance()">↻ Refresh</button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ROLL NO</th>
+                                    <th>NAME</th>
+                                    <th>BRANCH / SEM</th>
+                                    <th>CLASSES ATTENDED</th>
+                                    <th>PERCENTAGE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentAttTable">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- SUBJECTS TAB -->
                 <div id="subjects" class="tab-content">
+                    <div style="display:flex; gap:12px; max-width:900px; margin: 0 auto 20px; align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Branch</label>
+                            <input type="text" id="subjFilterBranch" placeholder="e.g. CSE"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:13px; color:var(--text-dim);">Filter by Semester</label>
+                            <input type="text" id="subjFilterSemester" placeholder="e.g. S6"
+                                style="width:100%; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; margin-top:5px;">
+                        </div>
+                        <div>
+                            <button class="btn-primary" onclick="loadSubjects()"
+                                style="padding: 10px 20px; margin-bottom: 2px;">Apply Filter</button>
+                        </div>
+                    </div>
+
                     <div class="card-table" style="max-width: 900px; margin: 0 auto;">
                         <div class="table-header">
                             <h3>Subject Registry</h3>
@@ -504,6 +655,7 @@
                                     <th>SUBJECT NAME</th>
                                     <th>STREAM</th>
                                     <th>SEMESTER</th>
+                                    <th>ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody id="subjectsTable">
@@ -610,7 +762,7 @@
                         <input type="text" id="u_branch" placeholder="CSE">
                     </div>
                     <div class="form-group">
-                        <label>Roll No / Sems</label>
+                        <label id="u_roll_label">Roll No / Sems</label>
                         <input type="text" id="u_roll" placeholder="NIE23CS01">
                     </div>
                 </div>
@@ -623,6 +775,26 @@
             </form>
         </div>
     </div>
+
+    <script>
+        function updateRoleFields() {
+            const role = document.getElementById('u_role').value;
+            const rollLabel = document.getElementById('u_roll_label');
+            const rollInput = document.getElementById('u_roll');
+            if (role === 'student') {
+                rollLabel.innerText = 'Roll No / Sems';
+                rollInput.placeholder = 'NIE23CS01';
+                rollInput.type = 'text';
+            } else {
+                rollLabel.innerText = 'Email Address';
+                rollInput.placeholder = 'email@university.edu';
+                rollInput.type = 'email';
+            }
+        }
+
+        // Let's attach an event listener so if they change it manually in the modal
+        document.getElementById('u_role').addEventListener('change', updateRoleFields);
+    </script>
 
     <!-- MODAL: ADD SUBJECT -->
     <div id="subjectModal" class="modal-overlay">
@@ -640,11 +812,28 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div class="form-group">
                         <label>Branch</label>
-                        <input type="text" id="s_branch" placeholder="CSE">
+                        <select id="s_branch" required>
+                            <option value="" disabled selected>Select Branch</option>
+                            <option value="CSE">CSE</option>
+                            <option value="ECE">ECE</option>
+                            <option value="EEE">EEE</option>
+                            <option value="MECH">MECH</option>
+                            <option value="CIVIL">CIVIL</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Semester</label>
-                        <input type="text" id="s_semester" placeholder="S6">
+                        <select id="s_semester" required>
+                            <option value="" disabled selected>Select Sem</option>
+                            <option value="S1">S1</option>
+                            <option value="S2">S2</option>
+                            <option value="S3">S3</option>
+                            <option value="S4">S4</option>
+                            <option value="S5">S5</option>
+                            <option value="S6">S6</option>
+                            <option value="S7">S7</option>
+                            <option value="S8">S8</option>
+                        </select>
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -652,6 +841,33 @@
                         onclick="closeModal('subjectModal')">Cancel</button>
                     <button type="submit" class="btn-primary" style="flex-grow: 1; justify-content: center;">Add
                         Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CHANGE PASSWORD -->
+    <div id="passwordModal" class="modal-overlay">
+        <div class="modal">
+            <h2>Change Password</h2>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="current_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="new_password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirm_password" placeholder="••••••••" required>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn-primary" style="background: var(--bg-card);"
+                        onclick="closeModal('passwordModal')">Cancel</button>
+                    <button type="submit" class="btn-primary" style="flex-grow: 1; justify-content: center;">Update
+                        Password</button>
                 </div>
             </form>
         </div>
@@ -681,6 +897,8 @@
             const titles = {
                 overview: ["System Overview", "Live metrics and system status at a glance."],
                 users: ["User Management", "Analyze, search, and manage platform participants."],
+                faculty_dash: ["Faculty Dashboard", "Faculty controls and active live sessions."],
+                student_att: ["Student Attendance Data", "Overall attendance tracking for all students."],
                 subjects: ["Subject Registry", "Maintain the central catalogue of academic subjects."],
                 reports: ["Attendance Reports", "Export data for academic validation and logging."]
             };
@@ -690,6 +908,8 @@
 
             if (tabId === 'overview') loadOverview();
             if (tabId === 'users') loadUsers();
+            if (tabId === 'faculty_dash') loadActiveSessions();
+            if (tabId === 'student_att') loadAllStudentAttendance();
             if (tabId === 'subjects') loadSubjects();
             if (tabId === 'reports') loadAttendanceSessions();
         }
@@ -727,44 +947,92 @@
             if (sData.success) document.getElementById('countSubjects').innerText = sData.subjects.length;
         }
 
+        function renderUserTable(usersToRender) {
+            const table = document.getElementById('fullUsersTable');
+            table.innerHTML = usersToRender.map(u => `
+                <tr>
+                    <td><div style="font-weight:600; font-size: 15px;">${u.name || 'Unnamed'}</div><div style="font-size:12px;color:var(--text-dim)">@${u.username}</div></td>
+                    <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
+                    <td>${u.branch || 'None'}</td>
+                    <td style="font-family: monospace">${u.roll_no || u.semester || '--'}</td>
+                    <td style="display: flex; gap: 10px;">
+                        ${u.role === 'student' ? `<button class="btn-icon" title="Reset Device Link" onclick="resetDevice(${u.id})"><i data-lucide="shield-off"></i></button>` : ''}
+                        <button class="btn-icon delete" title="Delete User" onclick="deleteUser(${u.id})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+
+            // Adjust table header dynamically if we filter purely by faculty
+            const rollHeader = document.querySelector('#users table thead tr th:nth-child(4)');
+            if (rollHeader) {
+                const currentFilter = document.querySelector('.btn-primary[style*="background: var(--primary)"]')?.id;
+                if (currentFilter === 'filter-faculty' || currentFilter === 'filter-admin') {
+                    rollHeader.innerText = 'EMAIL ADDRESS';
+                } else {
+                    rollHeader.innerText = 'ROLL NO / SEM';
+                }
+            }
+        }
+
         async function loadUsers() {
             const res = await fetch(`${API_BASE}/admin/users?per_page=100`, {
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
             const data = await res.json();
             if (data.success) {
-                const table = document.getElementById('fullUsersTable');
-                table.innerHTML = data.users.map(u => `
-                    <tr>
-                        <td><div style="font-weight:600; font-size: 15px;">${u.name || 'Unnamed'}</div><div style="font-size:12px;color:var(--text-dim)">@${u.username}</div></td>
-                        <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
-                        <td>${u.branch || 'None'}</td>
-                        <td style="font-family: monospace">${u.roll_no || u.semester || '--'}</td>
-                        <td style="display: flex; gap: 10px;">
-                            ${u.role === 'student' ? `<button class="btn-icon" title="Reset Device Link" onclick="resetDevice(${u.id})"><i data-lucide="shield-off"></i></button>` : ''}
-                            <button class="btn-icon delete" title="Delete User" onclick="deleteUser(${u.id})"><i data-lucide="trash-2"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-                lucide.createIcons();
+                window.allUsers = data.users; // Store to filter later
+                filterUsers('all');
+            }
+        }
+
+        function filterUsers(role) {
+            // Update button styles
+            ['all', 'student', 'faculty', 'admin'].forEach(r => {
+                const btn = document.getElementById('filter-' + r);
+                if (btn) {
+                    btn.style.background = (r === role) ? 'var(--primary)' : 'rgba(255,255,255,0.05)';
+                }
+            });
+
+            if (!window.allUsers) return;
+
+            if (role === 'all') {
+                renderUserTable(window.allUsers);
+            } else {
+                renderUserTable(window.allUsers.filter(u => u.role === role));
             }
         }
 
         async function loadSubjects() {
-            const res = await fetch(`${API_BASE}/admin/subjects`, {
+            const branch = document.getElementById('subjFilterBranch')?.value || '';
+            const semester = document.getElementById('subjFilterSemester')?.value || '';
+
+            let url = `${API_BASE}/admin/subjects`;
+            let params = new URLSearchParams();
+            if (branch) params.append('branch', branch);
+            if (semester) params.append('semester', semester);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${TOKEN}` }
             });
             const data = await res.json();
             if (data.success) {
                 const table = document.getElementById('subjectsTable');
-                table.innerHTML = data.subjects.map(s => `
+                table.innerHTML = data.subjects.length > 0 ? data.subjects.map(s => `
                     <tr>
                         <td style="font-weight:700; color: var(--primary-light)">${s.code}</td>
                         <td>${s.name}</td>
                         <td>${s.branch}</td>
                         <td>${s.semester}</td>
+                        <td><button class="btn-icon delete" title="Delete Subject" onclick="deleteSubject(${s.id})"><i data-lucide="trash-2"></i></button></td>
                     </tr>
-                `).join('');
+                `).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No subjects found matching the criteria.</td></tr>';
+                lucide.createIcons();
             }
         }
 
@@ -772,14 +1040,18 @@
 
         document.getElementById('userForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const role = document.getElementById('u_role').value;
+            // Depending on role, the u_roll input might contain email vs roll number.
+            const rollOrEmail = document.getElementById('u_roll').value;
+
             const body = {
                 username: document.getElementById('u_username').value,
                 password: document.getElementById('u_password').value,
-                role: document.getElementById('u_role').value,
+                role: role,
                 name: document.getElementById('u_name').value,
                 branch: document.getElementById('u_branch').value,
-                roll_no: document.getElementById('u_roll').value,
-                semester: document.getElementById('u_role').value === 'student' ? 'S6' : null
+                roll_no: rollOrEmail, // Just passing it as roll_no to backend for simplicity since backend DB is flexible
+                semester: role === 'student' ? 'S6' : null
             };
 
             const res = await fetch(`${API_BASE}/admin/users`, {
@@ -812,9 +1084,35 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('subjectModal');
+                document.getElementById('subjectForm').reset();
                 loadSubjects();
-                e.target.reset();
-            } else alert(data.message);
+            } else {
+                alert(data.message);
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pw0 = document.getElementById('current_password').value;
+            const pw1 = document.getElementById('new_password').value;
+            const pw2 = document.getElementById('confirm_password').value;
+            if (pw1 !== pw2) {
+                alert("Passwords do not match!");
+                return;
+            }
+            const res = await fetch(`${API_BASE}/admin/change-password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+                body: JSON.stringify({ current_password: pw0, new_password: pw1 })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Password successfully changed. You will now be logged out.");
+                closeModal('passwordModal');
+                logout();
+            } else {
+                alert(data.message);
+            }
         });
 
         async function deleteUser(id) {
@@ -825,6 +1123,17 @@
             });
             const data = await res.json();
             if (data.success) loadUsers();
+            else alert(data.message);
+        }
+
+        async function deleteSubject(id) {
+            if (!confirm("Are you sure you want to delete this subject?")) return;
+            const res = await fetch(`${API_BASE}/admin/subjects/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+            const data = await res.json();
+            if (data.success) loadSubjects();
             else alert(data.message);
         }
 
@@ -856,8 +1165,8 @@
                             <td>${s.subject || '-'}</td>
                             <td>${s.faculty_name || 'Unknown'}</td>
                             <td>${s.branch} ${s.semester}</td>
-                            <td>${s.start_time ? s.start_time.slice(0, 16).replace('T', ' ') : '-'}</td>
-                            <td><span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;font-weight:700;">${s.present_count}</span></td>
+                            <td>${s.start_time ? new Date(s.start_time).toLocaleString() : '-'}</td>
+                            <td><span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 10px;border-radius:20px;font-weight:700;">${s.present_count} present</span></td>
                         </tr>
                     `).join('');
                 } else {
@@ -865,6 +1174,84 @@
                 }
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load. Check connection.</td></tr>';
+            }
+        }
+
+        async function loadActiveSessions() {
+            const tbody = document.getElementById('activeFacultySessionsTable');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/admin/attendance`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const now = new Date();
+                    const activeSessions = data.sessions.filter(s => new Date(s.expires_at) > now);
+                    if (activeSessions.length > 0) {
+                        tbody.innerHTML = activeSessions.map(s => `
+                            <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(99,102,241,0.05)'" onmouseleave="this.style.background='none'" onclick="viewLiveSession(${s.id})">
+                                <td><div style="font-weight:600">${s.subject || '-'}</div></td>
+                                <td>${s.faculty_name || 'Unknown'}</td>
+                                <td>${s.branch} ${s.semester}</td>
+                                <td>${s.start_time ? new Date(s.start_time).toLocaleTimeString() : '-'}</td>
+                                <td><span style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 12px;border-radius:20px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
+                                    <span style="display:inline-block;width:6px;height:6px;background:#10b981;border-radius:50%;box-shadow:0 0 5px #10b981;"></span>
+                                    LIVE (${s.present_count})
+                                </span></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No active sessions at the moment.</td></tr>';
+                    }
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load active sessions.</td></tr>';
+            }
+        }
+
+        function viewLiveSession(sessionId) {
+            localStorage.setItem("current_session_id", sessionId);
+            window.location.href = "faculty_dashboard.html";
+        }
+
+        async function loadAllStudentAttendance() {
+            const tbody = document.getElementById('studentAttTable');
+            const branch = document.getElementById('attFilterBranch')?.value || '';
+            const semester = document.getElementById('attFilterSemester')?.value || '';
+
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">Loading...</td></tr>';
+            try {
+                let url = `${API_BASE}/admin/all_student_attendance`;
+                let params = new URLSearchParams();
+                if (branch) params.append('branch', branch);
+                if (semester) params.append('semester', semester);
+
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                const data = await res.json();
+                if (data.success && data.students.length > 0) {
+                    tbody.innerHTML = data.students.map(s => {
+                        let color = s.percentage < 75 ? 'var(--danger)' : '#10b981';
+                        return `
+                        <tr>
+                            <td><div style="font-weight:700; font-family:monospace">${s.roll_no || '-'}</div></td>
+                            <td>${s.name}</td>
+                            <td>${s.branch} ${s.semester}</td>
+                            <td>${s.present_count} / ${s.total_sessions}</td>
+                            <td><span style="background:rgba(255,255,255,0.05);color:${color};padding:3px 10px;border-radius:20px;font-weight:700;">${s.percentage}%</span></td>
+                        </tr>
+                    `}).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">No student data found.</td></tr>';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Failed to load. View console for details.</td></tr>';
             }
         }
 

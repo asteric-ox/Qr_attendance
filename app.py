@@ -1,5 +1,5 @@
 import os
-import sqlite3
+import mysql.connector
 import math
 import csv
 import json
@@ -17,6 +17,7 @@ from cryptography.fernet import InvalidToken
 app = Flask(__name__)
 CORS(app)
 app.url_map.strict_slashes = False
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 🔑 Secuirty Keys - PERSISTENT for Render
 # We use a fixed key so that if Render restarts, tokens and QR codes still work.
@@ -29,11 +30,15 @@ jwt = JWTManager(app)
 # This is a valid 32-byte URL-safe base64 Fernet key.
 cipher_suite = Fernet(b'ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=')
 
-DATABASE = "qr_attendance.db"
+DATABASE_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "Delvin@2005",
+    "database": "qr_attendence"
+}
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    conn = mysql.connector.connect(**DATABASE_CONFIG)
     return conn
 
 @app.route("/api/health")
@@ -54,112 +59,102 @@ def health_check():
 
 def init_db():
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
 
+    # 1. Users Table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) UNIQUE,
         password TEXT,
-        role TEXT
+        role VARCHAR(50),
+        name VARCHAR(255),
+        roll_no VARCHAR(100),
+        branch VARCHAR(100),
+        semester VARCHAR(50),
+        device_id VARCHAR(255)
     )
     """)
-    # 🩹 Ensure all columns exist (Migration for existing databases)
-    columns = {
-        "name": "TEXT",
-        "roll_no": "TEXT",
-        "branch": "TEXT",
-        "semester": "TEXT",
-        "device_id": "TEXT"
-    }
-    for col_name, col_type in columns.items():
-        try:
-            cur.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
-        except sqlite3.OperationalError:
-            pass # Column already exists
-    
 
+    # 2. Sessions Table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        faculty_id INTEGER,
-        branch TEXT,
-        semester TEXT,
-        subject TEXT,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        faculty_id INT,
+        branch VARCHAR(100),
+        semester VARCHAR(50),
+        subject VARCHAR(255),
         start_time TEXT,
-        latitude REAL,
-        longitude REAL,
+        latitude DOUBLE,
+        longitude DOUBLE,
         expires_at TEXT,
-        radius INTEGER DEFAULT 20
+        radius INT DEFAULT 20
     )
     """)
-    # Migration for sessions radius
-    try:
-        cur.execute("ALTER TABLE sessions ADD COLUMN radius INTEGER DEFAULT 20")
-    except sqlite3.OperationalError:
-        pass
 
+    # 3. Attendance Table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS attendance (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id INTEGER,
-        student_id INTEGER,
-        status TEXT,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        session_id INT,
+        student_id INT,
+        status VARCHAR(50),
         marked_at TEXT
     )
     """)
 
+    # 4. Subjects Table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS subjects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT UNIQUE,
-        name TEXT,
-        branch TEXT,
-        semester TEXT
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(100) UNIQUE,
+        name VARCHAR(255),
+        branch VARCHAR(100),
+        semester VARCHAR(50)
     )
     """)
 
+    # 5. Timetable Table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS timetable (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        faculty_id INTEGER,
-        subject_id INTEGER,
-        day_of_week TEXT,
-        start_time TEXT,
-        end_time TEXT,
-        branch TEXT,
-        semester TEXT
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        faculty_id INT,
+        subject_id INT,
+        day_of_week VARCHAR(20),
+        start_time VARCHAR(20),
+        end_time VARCHAR(20),
+        branch VARCHAR(100),
+        semester VARCHAR(50)
     )
     """)
 
     conn.commit()
 
-    # 🚀 Auto-seed default users if database is empty (important for Render)
-    cur.execute("SELECT COUNT(*) FROM users")
-    if cur.fetchone()[0] == 0:
+    # 🚀 Auto-seed default users if database is empty
+    cur.execute("SELECT COUNT(*) as count FROM users")
+    if cur.fetchone()['count'] == 0:
         print("Seeding default users...")
         default_users = [
             ("admin1", generate_password_hash("admin123"), "admin", "Admin User")
         ]
         for username, password, role, name in default_users:
             cur.execute(
-                "INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)",
+                "INSERT INTO users (username, password, role, name) VALUES (%s, %s, %s, %s)",
                 (username, password, role, name)
             )
         conn.commit()
 
     # 📂 Import students from CSV if available
     try:
-        if os.path.exists("students.csv"):
-            with open("students.csv", newline='', encoding="utf-8") as f:
+        csv_path = os.path.join(BASE_DIR, "students.csv")
+        if os.path.exists(csv_path):
+            with open(csv_path, newline='', encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    # Check if user exists BEFORE hashing to save CPU
-                    cur.execute("SELECT 1 FROM users WHERE username=?", (row["username"],))
+                    cur.execute("SELECT 1 FROM users WHERE username=%s", (row["username"],))
                     if cur.fetchone():
                         continue
                         
-                    # Provide defaults for potentially missing columns
                     semester = row.get("semester", "N/A")
                     branch = row.get("branch", "N/A")
                     name = row.get("name", "N/A")
@@ -168,7 +163,7 @@ def init_db():
                     cur.execute("""
                         INSERT INTO users 
                         (username, password, role, name, roll_no, branch, semester)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """, (
                         row["username"],
                         generate_password_hash(row["password"]),
@@ -185,16 +180,15 @@ def init_db():
 
     # 🧑‍🏫 Import faculty from CSV if available
     try:
-        if os.path.exists("faculty.csv"):
-            with open("faculty.csv", newline='', encoding="utf-8") as f:
+        csv_path = os.path.join(BASE_DIR, "faculty.csv")
+        if os.path.exists(csv_path):
+            with open(csv_path, newline='', encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    # Check if user exists BEFORE hashing to save CPU
-                    cur.execute("SELECT 1 FROM users WHERE username=?", (row["username"],))
+                    cur.execute("SELECT 1 FROM users WHERE username=%s", (row["username"],))
                     if cur.fetchone():
                         continue
 
-                    # Provide defaults for potentially missing columns
                     semester = row.get("semester", "N/A")
                     branch = row.get("branch", "N/A")
                     name = row.get("name", "N/A")
@@ -202,7 +196,7 @@ def init_db():
                     cur.execute("""
                         INSERT INTO users 
                         (username, password, role, name, branch, semester)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                     """, (
                         row["username"],
                         generate_password_hash(row["password"]),
@@ -243,9 +237,9 @@ def login():
     device_id = data.get("device_id")
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute(
-        "SELECT id, username, password, role, name, roll_no, branch, semester, device_id FROM users WHERE username=?",
+        "SELECT id, username, password, role, name, roll_no, branch, semester, device_id FROM users WHERE username=%s",
         (username,)
     )
     user = cur.fetchone()
@@ -262,7 +256,7 @@ def login():
             
             if stored_device is None:
                 # First time login on this device - Bind it
-                cur.execute("UPDATE users SET device_id = ? WHERE id = ?", (device_id, user["id"]))
+                cur.execute("UPDATE users SET device_id = %s WHERE id = %s", (device_id, user["id"]))
                 conn.commit()
             elif stored_device != device_id:
                 conn.close()
@@ -294,8 +288,8 @@ def login():
 def whoami():
     current_user_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, role, name, branch, semester FROM users WHERE id = ?", (current_user_id,))
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT id, username, role, name, branch, semester FROM users WHERE id = %s", (current_user_id,))
     user = cur.fetchone()
     conn.close()
     if user:
@@ -308,7 +302,7 @@ def whoami():
 @jwt_required()
 def create_session():
     claims = get_jwt()
-    if claims.get("role") != "faculty":
+    if claims.get("role") not in ["faculty", "admin"]:
         return jsonify({"success": False, "message": "Unauthorized. Faculty only."}), 403
 
     data = request.json
@@ -330,11 +324,11 @@ def create_session():
     expires_at = (datetime.now() + timedelta(minutes=15)).isoformat()
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute(
         """
         INSERT INTO sessions (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at, radius)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (faculty_id, branch, semester, subject, start_time, latitude, longitude, expires_at, radius)
     )
@@ -349,8 +343,8 @@ def create_session():
 @jwt_required()
 def get_session_qr(session_id):
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM sessions WHERE id=?", (session_id,))
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT * FROM sessions WHERE id=%s", (session_id,))
     session = cur.fetchone()
     conn.close()
 
@@ -410,8 +404,8 @@ def mark_attendance():
         return jsonify({"success": False, "message": "QR Code expired. Scan the latest one on screen."}), 400
 
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM sessions WHERE id=?", (session_id,))
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT * FROM sessions WHERE id=%s", (session_id,))
     session = cur.fetchone()
 
     if not session:
@@ -429,11 +423,8 @@ def mark_attendance():
     # 📍 Geofence Check
     teacher_lat = session["latitude"]
     teacher_lng = session["longitude"]
-    # sqlite3.Row does not support .get(), so we use this pattern:
-    try:
-        allowed_radius = session["radius"] or 20
-    except (IndexError, KeyError):
-        allowed_radius = 20
+    
+    allowed_radius = session.get("radius") or 20
 
     if teacher_lat is not None and student_lat is not None:
         distance = haversine(teacher_lat, teacher_lng, student_lat, student_lng)
@@ -448,7 +439,7 @@ def mark_attendance():
 
     # Prevent duplicate
     cur.execute(
-        "SELECT id FROM attendance WHERE session_id=? AND student_id=?",
+        "SELECT id FROM attendance WHERE session_id=%s AND student_id=%s",
         (session_id, student_id)
     )
     if cur.fetchone():
@@ -459,7 +450,7 @@ def mark_attendance():
     status = "Present" if diff_minutes <= 10 else "Late"
 
     cur.execute(
-        "INSERT INTO attendance (session_id, student_id, status, marked_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO attendance (session_id, student_id, status, marked_at) VALUES (%s, %s, %s, %s)",
         (session_id, student_id, status, now.isoformat())
     )
     conn.commit()
@@ -472,10 +463,10 @@ def mark_attendance():
 @jwt_required()
 def get_live_attendance(session_id):
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
 
     # Get session info
-    cur.execute("SELECT * FROM sessions WHERE id=?", (session_id,))
+    cur.execute("SELECT * FROM sessions WHERE id=%s", (session_id,))
     session = cur.fetchone()
     if not session:
         conn.close()
@@ -487,7 +478,7 @@ def get_live_attendance(session_id):
                u.name, u.roll_no, u.branch, u.semester
         FROM attendance a
         JOIN users u ON a.student_id = u.id
-        WHERE a.session_id = ?
+        WHERE a.session_id = %s
         ORDER BY a.marked_at DESC
     """, (session_id,))
     rows = cur.fetchall()
@@ -509,9 +500,9 @@ def update_session_location(session_id):
     longitude = data.get("longitude")
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute(
-        "UPDATE sessions SET latitude=?, longitude=? WHERE id=?",
+        "UPDATE sessions SET latitude=%s, longitude=%s WHERE id=%s",
         (latitude, longitude, session_id)
     )
     conn.commit()
@@ -525,10 +516,10 @@ def update_session_location(session_id):
 def get_faculty_dashboard():
     faculty_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
     # Get active session
-    cur.execute("SELECT id, subject, branch, semester FROM sessions WHERE faculty_id=? AND expires_at > ? ORDER BY id DESC LIMIT 1", 
+    cur.execute("SELECT id, subject, branch, semester FROM sessions WHERE faculty_id=%s AND expires_at > %s ORDER BY id DESC LIMIT 1", 
                 (faculty_id, datetime.now().isoformat()))
     active_session = cur.fetchone()
     
@@ -539,7 +530,7 @@ def get_faculty_dashboard():
             SELECT u.name, a.status, a.marked_at 
             FROM attendance a 
             JOIN users u ON a.student_id = u.id 
-            WHERE a.session_id=? 
+            WHERE a.session_id=%s 
             ORDER BY a.marked_at DESC LIMIT 10
         """, (active_session["id"],))
         rows = cur.fetchall()
@@ -562,13 +553,13 @@ def get_current_period():
     time = now.strftime('%H:%M')
     
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute("""
         SELECT t.*, s.name as subject_name 
         FROM timetable t
         JOIN subjects s ON t.subject_id = s.id
-        WHERE t.faculty_id = ? AND t.day_of_week = ? 
-        AND ? BETWEEN t.start_time AND t.end_time
+        WHERE t.faculty_id = %s AND t.day_of_week = %s 
+        AND %s BETWEEN t.start_time AND t.end_time
     """, (faculty_id, day, time))
     period = cur.fetchone()
     conn.close()
@@ -580,12 +571,12 @@ def get_current_period():
 def get_faculty_timetable():
     faculty_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute("""
         SELECT t.*, s.name as subject_name 
         FROM timetable t
         JOIN subjects s ON t.subject_id = s.id
-        WHERE t.faculty_id = ?
+        WHERE t.faculty_id = %s
         ORDER BY CASE day_of_week 
             WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 
             WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 
@@ -603,18 +594,18 @@ def get_faculty_timetable():
 def get_student_stats():
     student_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
     # Overall attendance %
-    cur.execute("SELECT COUNT(*) FROM attendance WHERE student_id=?", (student_id,))
-    present = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) as count FROM attendance WHERE student_id=%s", (student_id,))
+    present = cur.fetchone()['count']
     
     # Ideally compare with total sessions for their branch/sem
-    cur.execute("SELECT branch, semester FROM users WHERE id=?", (student_id,))
+    cur.execute("SELECT branch, semester FROM users WHERE id=%s", (student_id,))
     user = cur.fetchone()
     
-    cur.execute("SELECT COUNT(*) FROM sessions WHERE branch=? AND semester=?", (user["branch"], user["semester"]))
-    total_sessions = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) as count FROM sessions WHERE branch=%s AND semester=%s", (user["branch"], user["semester"]))
+    total_sessions = cur.fetchone()['count']
     
     percent = (present / total_sessions * 100) if total_sessions > 0 else 0
     
@@ -623,7 +614,7 @@ def get_student_stats():
         SELECT s.subject, a.status, a.marked_at 
         FROM attendance a
         JOIN sessions s ON a.session_id = s.id
-        WHERE a.student_id = ?
+        WHERE a.student_id = %s
         ORDER BY a.marked_at DESC LIMIT 5
     """, (student_id,))
     history = [dict(r) for r in cur.fetchall()]
@@ -643,9 +634,9 @@ def get_student_stats():
 def get_student_timetable():
     student_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
-    cur.execute("SELECT branch, semester FROM users WHERE id=?", (student_id,))
+    cur.execute("SELECT branch, semester FROM users WHERE id=%s", (student_id,))
     user = cur.fetchone()
     
     day = datetime.now().strftime('%A')
@@ -655,7 +646,7 @@ def get_student_timetable():
         FROM timetable t
         JOIN subjects s ON t.subject_id = s.id
         JOIN users u ON t.faculty_id = u.id
-        WHERE UPPER(t.branch) = UPPER(?) AND UPPER(t.semester) = UPPER(?) AND t.day_of_week = ?
+        WHERE UPPER(t.branch) = UPPER(%s) AND UPPER(t.semester) = UPPER(%s) AND t.day_of_week = %s
         ORDER BY t.start_time
     """, (user["branch"], user["semester"], day))
     
@@ -668,9 +659,9 @@ def get_student_timetable():
 def get_student_timetable_full():
     student_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
-    cur.execute("SELECT branch, semester FROM users WHERE id=?", (student_id,))
+    cur.execute("SELECT branch, semester FROM users WHERE id=%s", (student_id,))
     user = cur.fetchone()
     
     cur.execute("""
@@ -678,7 +669,7 @@ def get_student_timetable_full():
         FROM timetable t
         JOIN subjects s ON t.subject_id = s.id
         JOIN users u ON t.faculty_id = u.id
-        WHERE UPPER(t.branch) = UPPER(?) AND UPPER(t.semester) = UPPER(?)
+        WHERE UPPER(t.branch) = UPPER(%s) AND UPPER(t.semester) = UPPER(%s)
         ORDER BY CASE day_of_week 
             WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 
             WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 
@@ -695,13 +686,13 @@ def get_student_timetable_full():
 def get_student_attendance_full():
     student_id = get_jwt_identity()
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
-    cur.execute("SELECT branch, semester FROM users WHERE id=?", (student_id,))
+    cur.execute("SELECT branch, semester FROM users WHERE id=%s", (student_id,))
     user = cur.fetchone()
     
     # Get all subjects for this sem
-    cur.execute("SELECT name FROM subjects WHERE branch=? AND semester=?", (user["branch"], user["semester"]))
+    cur.execute("SELECT name FROM subjects WHERE branch=%s AND semester=%s", (user["branch"], user["semester"]))
     subjects = cur.fetchall()
     
     totals = []
@@ -709,21 +700,21 @@ def get_student_attendance_full():
     
     for r in subjects:
         # Total sessions for this subject
-        cur.execute("SELECT COUNT(*) FROM sessions WHERE subject=? AND branch=? AND semester=?", (r[0], user["branch"], user["semester"]))
-        total = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) as count FROM sessions WHERE subject=%s AND branch=%s AND semester=%s", (r['name'], user["branch"], user["semester"]))
+        total = cur.fetchone()['count']
         
         # Present count
         cur.execute("""
-            SELECT COUNT(*) FROM attendance a 
+            SELECT COUNT(*) as count FROM attendance a 
             JOIN sessions s ON a.session_id = s.id 
-            WHERE a.student_id=? AND s.subject=?
-        """, (student_id, r[0]))
-        present = cur.fetchone()[0]
+            WHERE a.student_id=%s AND s.subject=%s
+        """, (student_id, r['name']))
+        present = cur.fetchone()['count']
         
         percent = (present / total * 100) if total > 0 else 0
         
         totals.append({
-            "subject": r[0],
+            "subject": r['name'],
             "present": present,
             "total_classes": total,
             "percentage": percent
@@ -751,15 +742,15 @@ def list_users():
     offset = (page - 1) * per_page
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     
     # Get total count
-    cur.execute("SELECT COUNT(*) FROM users")
-    total_users = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) as count FROM users")
+    total_users = cur.fetchone()['count']
     total_pages = math.ceil(total_users / per_page)
 
     cur.execute(
-        "SELECT id, username, role, name, roll_no, branch, semester FROM users LIMIT ? OFFSET ?",
+        "SELECT id, username, role, name, roll_no, branch, semester FROM users LIMIT %s OFFSET %s",
         (per_page, offset)
     )
     rows = cur.fetchall()
@@ -803,11 +794,11 @@ def create_user():
 
     try:
         conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor(dictionary=True)
         cur.execute(
             """
             INSERT INTO users (username, password, role, name, roll_no, branch, semester)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
             (username, hashed_password, role, name, roll_no, branch, semester)
         )
@@ -815,8 +806,10 @@ def create_user():
         user_id = cur.lastrowid
         conn.close()
         return jsonify({"success": True, "message": "User created", "user_id": user_id}), 201
-    except sqlite3.IntegrityError:
-        return jsonify({"success": False, "message": "Username already exists"}), 400
+    except mysql.connector.Error as err:
+        if err.errno == 1062:
+            return jsonify({"success": False, "message": "Username already exists"}), 400
+        return jsonify({"success": False, "message": str(err)}), 500
 
 
 # 🧑‍💼 Admin: Update User
@@ -837,20 +830,20 @@ def update_user(user_id):
     for field in allowed_fields:
         if field in data:
             if field == "password":
-                updates.append(f"{field} = ?")
+                updates.append(f"{field} = %s")
                 params.append(generate_password_hash(data[field]))
             else:
-                updates.append(f"{field} = ?")
+                updates.append(f"{field} = %s")
                 params.append(data[field])
 
     if not updates:
         return jsonify({"success": False, "message": "No update data provided"}), 400
 
     params.append(user_id)
-    query = f"UPDATE users SET {', '.join(updates)} WHERE id = ?"
+    query = f"UPDATE users SET {', '.join(updates)} WHERE id = %s"
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute(query, tuple(params))
     conn.commit()
     
@@ -862,6 +855,54 @@ def update_user(user_id):
     return jsonify({"success": True, "message": "User updated"})
 
 
+# 🧑‍💼 Admin: Change Password (Self or Other User)
+@app.route("/api/admin/change-password", methods=["PUT"])
+@jwt_required()
+def admin_change_password():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized. Admin only."}), 403
+
+    data = request.json
+    target_user_id = data.get("user_id") # Optional: ID of the user whose password is to be changed
+    new_password = data.get("new_password")
+    
+    if not new_password:
+        return jsonify({"success": False, "message": "New password required"}), 400
+
+    # If no user_id is provided, change the current admin's password
+    if not target_user_id:
+        target_user_id = get_jwt_identity()
+        current_password = data.get("current_password")
+        if not current_password:
+            return jsonify({"success": False, "message": "Current password required"}), 400
+            
+        conn = get_db()
+        cur = conn.cursor(dictionary=True)
+        cur.execute("SELECT password FROM users WHERE id = %s", (target_user_id,))
+        user_record = cur.fetchone()
+        
+        if not user_record or not check_password_hash(user_record["password"], current_password):
+            conn.close()
+            return jsonify({"success": False, "message": "Incorrect current password"}), 401
+    else:
+        conn = get_db()
+        
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET password = %s WHERE id = %s",
+        (generate_password_hash(new_password), target_user_id)
+    )
+    conn.commit()
+    
+    if cur.rowcount == 0:
+        conn.close()
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    conn.close()
+    return jsonify({"success": True, "message": "Password changed successfully"})
+
+
 # 🧑‍💼 Admin: Delete User
 @app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
 @jwt_required()
@@ -871,8 +912,8 @@ def delete_user(user_id):
         return jsonify({"success": False, "message": "Unauthorized. Admin only."}), 403
 
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    cur = conn.cursor(dictionary=True)
+    cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
     conn.commit()
     
     if cur.rowcount == 0:
@@ -892,8 +933,8 @@ def reset_device(user_id):
         return jsonify({"success": False, "message": "Unauthorized. Admin only."}), 403
 
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("UPDATE users SET device_id = NULL WHERE id = ?", (user_id,))
+    cur = conn.cursor(dictionary=True)
+    cur.execute("UPDATE users SET device_id = NULL WHERE id = %s", (user_id,))
     conn.commit()
     conn.close()
     
@@ -915,14 +956,14 @@ def list_subjects():
     params = []
     
     if branch and semester:
-        query += " WHERE branch = ? AND semester = ?"
+        query += " WHERE branch = %s AND semester = %s"
         params = (branch, semester)
     elif branch:
-        query += " WHERE branch = ?"
+        query += " WHERE branch = %s"
         params = (branch,)
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute(query, params)
     rows = cur.fetchall()
     conn.close()
@@ -938,7 +979,7 @@ def admin_list_attendance():
         return jsonify({"success": False, "message": "Unauthorized. Admin only."}), 403
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     # Get all sessions with faculty name and attendance count
     cur.execute("""
         SELECT s.id, s.branch, s.semester, s.subject, s.start_time, s.expires_at,
@@ -954,6 +995,56 @@ def admin_list_attendance():
     rows = cur.fetchall()
     conn.close()
     return jsonify({"success": True, "sessions": [dict(r) for r in rows]})
+
+
+# 📊 Admin: View All Student Attendance Data
+@app.route("/api/admin/all_student_attendance", methods=["GET"])
+@jwt_required()
+def admin_all_student_attendance():
+    claims = get_jwt()
+    if claims.get("role") != "admin":
+        return jsonify({"success": False, "message": "Unauthorized. Admin only."}), 403
+
+    branch = request.args.get("branch")
+    semester = request.args.get("semester")
+
+    conn = get_db()
+    cur = conn.cursor(dictionary=True)
+    
+    # We want to return all students along with their present count and total session count for their branch/sem
+    query = """
+    SELECT u.id, u.name, u.roll_no, u.branch, u.semester,
+           (SELECT COUNT(*) FROM attendance a WHERE a.student_id = u.id) as present_count,
+           (SELECT COUNT(*) FROM sessions s WHERE s.branch = u.branch AND s.semester = u.semester) as total_sessions
+    FROM users u
+    WHERE u.role = 'student'
+    """
+    params = []
+
+    if branch:
+        query += " AND u.branch = %s"
+        params.append(branch)
+        
+    if semester:
+        query += " AND u.semester = %s"
+        params.append(semester)
+
+    query += " ORDER BY u.branch, u.semester, u.roll_no"
+    
+    cur.execute(query, tuple(params))
+    students = cur.fetchall()
+    conn.close()
+
+    results = []
+    for s in students:
+        total = s['total_sessions']
+        present = s['present_count']
+        percentage = round((present / total * 100), 1) if total > 0 else 0
+        s_dict = dict(s)
+        s_dict['percentage'] = percentage
+        results.append(s_dict)
+
+    return jsonify({"success": True, "students": results})
 
 
 # 📥 Admin: Export Attendance Report as CSV
@@ -995,15 +1086,15 @@ def export_report():
         JOIN users u_student ON a.student_id = u_student.id
         JOIN sessions s ON a.session_id = s.id
         LEFT JOIN users u_faculty ON s.faculty_id = u_faculty.id
-        WHERE s.start_time >= ?
+        WHERE s.start_time >= %s
     """
     params = [cutoff.isoformat()]
 
     if branch:
-        query += " AND s.branch = ?"
+        query += " AND s.branch = %s"
         params.append(branch)
     if semester:
-        query += " AND s.semester = ?"
+        query += " AND s.semester = %s"
         params.append(semester)
 
     query += " ORDER BY s.start_time DESC"
@@ -1050,7 +1141,7 @@ def handle_exception(e):
 # 🌐 Serve Static & HTML Files
 @app.route("/")
 def home():
-    return send_from_directory('.', 'login.html')
+    return send_from_directory(BASE_DIR, 'login.html')
 
 @app.route("/<path:path>")
 def serve_files(path):
@@ -1061,16 +1152,17 @@ def serve_files(path):
         return "Access denied", 403
 
     try:
-        if os.path.exists(path):
-            return send_from_directory('.', path)
-        if os.path.exists(path + ".html"):
-            return send_from_directory('.', path + ".html")
+        full_path = os.path.join(BASE_DIR, path)
+        if os.path.exists(full_path):
+            return send_from_directory(BASE_DIR, path)
+        if os.path.exists(full_path + ".html"):
+            return send_from_directory(BASE_DIR, path + ".html")
         # For PWA support: return icons or manifest
         if "icon" in path or "manifest" in path:
-             return send_from_directory('.', path)
-        return send_from_directory('.', 'login.html')
+             return send_from_directory(BASE_DIR, path)
+        return send_from_directory(BASE_DIR, 'login.html')
     except Exception:
-        return send_from_directory('.', 'login.html')
+        return send_from_directory(BASE_DIR, 'login.html')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))

@@ -231,6 +231,30 @@
             background: rgba(0, 0, 0, 0.3);
         }
 
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            color: #64748b;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .toggle-password:hover {
+            color: white;
+        }
+
         .back-btn {
             background: none;
             border: none;
@@ -323,7 +347,13 @@
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" id="password" placeholder="••••••••" required autocomplete="off">
+                        <div class="password-container">
+                            <input type="password" id="password" placeholder="••••••••" required autocomplete="off"
+                                style="padding-right: 45px;">
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                                <i data-lucide="eye" style="width: 20px;"></i>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="btn-login" id="submit-btn">
                         <span id="btn-text">Sign In</span>
@@ -374,7 +404,32 @@
         window.onload = () => {
             document.getElementById('loginForm').reset();
             resetUI();
+            resetPasswordField();
         };
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById("password");
+            const btn = document.querySelector(".toggle-password");
+            if (pwdInput.type === "password") {
+                pwdInput.type = "text";
+                btn.innerHTML = '<i data-lucide="eye-off" style="width: 20px;"></i>';
+                lucide.createIcons();
+            } else {
+                pwdInput.type = "password";
+                btn.innerHTML = '<i data-lucide="eye" style="width: 20px;"></i>';
+                lucide.createIcons();
+            }
+        }
+
+        function resetPasswordField() {
+            const pwdInput = document.getElementById("password");
+            const btn = document.querySelector(".toggle-password");
+            if (pwdInput) pwdInput.type = "password";
+            if (btn) {
+                btn.innerHTML = '<i data-lucide="eye" style="width: 20px;"></i>';
+                lucide.createIcons();
+            }
+        }
 
         function getDeviceId() {
             // Fingerprinting: Use traits that are constant for a device

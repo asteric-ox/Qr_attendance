@@ -365,7 +365,11 @@
         function endSession() {
             if (confirm("End this session and save records?")) {
                 localStorage.removeItem("current_session_id");
-                window.location.href = "faculty_home.html";
+                if (localStorage.getItem("user_role") === "admin") {
+                    window.location.href = "admin_dashboard.html";
+                } else {
+                    window.location.href = "faculty_home.html";
+                }
             }
         }
 

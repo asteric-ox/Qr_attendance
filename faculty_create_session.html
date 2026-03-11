@@ -58,7 +58,7 @@
 
     <div class="card">
         <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 10px;">
-            <a href="faculty_home.html" style="color: #64748b; text-decoration: none;"><i data-lucide="chevron-left"
+            <a href="#" onclick="goBack()" style="color: #64748b; text-decoration: none;"><i data-lucide="chevron-left"
                     style="width: 20px;"></i></a>
             <h2 style="margin: 0;">Start Attendance</h2>
         </div>
@@ -106,6 +106,14 @@
 
             if (!branch) tryToSyncWithCurrentPeriod();
         };
+
+        function goBack() {
+            if (localStorage.getItem("user_role") === "admin") {
+                window.location.href = "admin_dashboard.html";
+            } else {
+                window.location.href = "faculty_home.html";
+            }
+        }
 
         async function tryToSyncWithCurrentPeriod() {
             try {
