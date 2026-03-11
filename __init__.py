@@ -1,4 +1,8 @@
-from .serving import run_simple as run_simple
-from .test import Client as Client
-from .wrappers import Request as Request
-from .wrappers import Response as Response
+#
+# This file is part of gunicorn released under the MIT license.
+# See the NOTICE for more information.
+
+version_info = (25, 1, 0)
+__version__ = ".".join([str(v) for v in version_info])
+SERVER = "gunicorn"
+SERVER_SOFTWARE = "%s/%s" % (SERVER, __version__)
