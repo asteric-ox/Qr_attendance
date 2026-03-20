@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 
@@ -303,4 +304,311 @@
 
 </body>
 
+=======
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>QR Attendance Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      padding: 16px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .panel {
+      max-width: 420px;
+      margin: 12px auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    button {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    #qrcode {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    /* Logout Animation CSS */
+    .logout-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: auto;
+      margin: 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .logout-btn:active {
+      transform: translateY(0);
+    }
+
+    .logout-btn.logging-out {
+      transform: translateX(15px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .page-fade-out {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div style="position: absolute; top: 16px; right: 16px; z-index: 100;">
+    <button class="logout-btn" onclick="logout(this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      Logout
+    </button>
+  </div>
+
+  <h2>QR Attendance Dashboard</h2>
+
+  <!-- Faculty Setup -->
+  <div id="facultySetup" class="panel hidden">
+    <h3>Faculty Setup</h3>
+    <select id="branch">
+      <option value="">Select Branch</option>
+      <option value="CSE">CSE</option>
+      <option value="AI">AI</option>
+      <option value="Cyber">Cyber</option>
+      <option value="Mech">Mech</option>
+      <option value="Civil">Civil</option>
+    </select>
+
+    <select id="semester">
+      <option value="">Select Semester</option>
+      <option>S1</option>
+      <option>S2</option>
+      <option>S3</option>
+      <option>S4</option>
+      <option>S5</option>
+      <option>S6</option>
+      <option>S7</option>
+      <option>S8</option>
+    </select>
+
+    <input id="subject" placeholder="Subject (e.g., CD)" />
+    <button onclick="goToQR()">Next</button>
+  </div>
+
+  <!-- Faculty QR Page -->
+  <div id="facultyPanel" class="panel hidden">
+    <h3>Generate QR</h3>
+    <p id="classInfoText"></p>
+    <button onclick="generateQR()">Generate QR</button>
+    <button class="secondary" onclick="backToSetup()">Back</button>
+    <div id="qrcode"></div>
+    <p id="facultyStatus" class="status"></p>
+  </div>
+
+  <!-- Student Panel -->
+  <div id="studentPanel" class="panel hidden">
+    <h3>Student Panel</h3>
+    <button onclick="startScanner()">Scan QR</button>
+    <div id="reader" style="width:260px;margin:auto;display:none;"></div>
+    <p id="scanStatus" class="status"></p>
+    <p id="locationStatus" class="status"></p>
+  </div>
+
+  <script>
+    const PRESENT_MS = 10 * 60 * 1000;
+    const LATE_MS = 5 * 60 * 1000;
+    const EXPIRY_MS = PRESENT_MS + LATE_MS;
+    const RADIUS = 20;
+
+    let classInfo = null;
+    let scanner = null;
+
+    window.onload = () => {
+      const role = new URLSearchParams(window.location.search).get("role");
+      if (role === "teacher") {
+        document.getElementById("facultySetup").classList.remove("hidden");
+      } else if (role === "student") {
+        document.getElementById("studentPanel").classList.remove("hidden");
+      } else {
+        location.href = "index.html";
+      }
+    };
+
+    function goToQR() {
+      const branch = document.getElementById("branch").value;
+      const semester = document.getElementById("semester").value;
+      const subject = document.getElementById("subject").value.trim();
+
+      if (!branch || !semester || !subject) {
+        alert("Please fill Branch, Semester, and Subject");
+        return;
+      }
+
+      classInfo = { branch, semester, subject };
+
+      document.getElementById("facultySetup").classList.add("hidden");
+      document.getElementById("facultyPanel").classList.remove("hidden");
+      document.getElementById("classInfoText").innerText =
+        `${branch} - ${semester} - ${subject}`;
+      document.getElementById("qrcode").innerHTML = "";
+      document.getElementById("facultyStatus").innerText = "";
+    }
+
+    function backToSetup() {
+      document.getElementById("facultyPanel").classList.add("hidden");
+      document.getElementById("facultySetup").classList.remove("hidden");
+      document.getElementById("qrcode").innerHTML = "";
+      document.getElementById("facultyStatus").innerText = "";
+    }
+
+    function generateQR() {
+      if (!classInfo) {
+        alert("Missing class info. Go back and fill details.");
+        return;
+      }
+
+      const payload = JSON.stringify({
+        ...classInfo,
+        ts: Date.now() // unique each time
+      });
+
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = ""; // clear previous QR
+      new QRCode(qrDiv, {
+        text: payload,
+        width: 220,
+        height: 220
+      });
+
+      document.getElementById("facultyStatus").innerText = "QR generated. Valid for this session.";
+    }
+
+    function startScanner() {
+      document.getElementById("reader").style.display = "block";
+      document.getElementById("scanStatus").innerText = "Starting camera...";
+      scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 220 },
+        (decodedText) => {
+          document.getElementById("scanStatus").innerText = "QR scanned";
+          handleScan(decodedText);
+          scanner.stop();
+        },
+        () => { }
+      ).catch(err => {
+        document.getElementById("scanStatus").innerText = "Camera failed. Check permission.";
+        console.error(err);
+      });
+    }
+
+    function handleScan(data) {
+      let obj;
+      try {
+        obj = JSON.parse(data);
+      } catch (e) {
+        document.getElementById("locationStatus").innerText = "Invalid QR";
+        return;
+      }
+
+      const elapsed = Date.now() - obj.ts;
+      let status = elapsed <= PRESENT_MS ? "Present" : elapsed <= EXPIRY_MS ? "Late" : "Expired";
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const d = dist(obj.lat ?? 0, obj.lon ?? 0, pos.coords.latitude, pos.coords.longitude);
+          if (d > RADIUS) status = "Denied";
+          document.getElementById("locationStatus").innerText = status;
+        },
+        () => {
+          document.getElementById("locationStatus").innerText = status + " (location denied)";
+        }
+      );
+    }
+
+    function dist(a, b, c, d) {
+      const R = 6371000;
+      const dLat = (c - a) * Math.PI / 180;
+      const dLon = (d - b) * Math.PI / 180;
+      const x =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    }
+
+    function logout(btn) {
+      if (btn) btn.classList.add("logging-out");
+      document.body.classList.add("page-fade-out");
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 400);
+    }
+  </script>
+
+</body>
+
+>>>>>>> cfc9b6af5e1d5697dd003ccf010269bd3f0df0de
 </html>

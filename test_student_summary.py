@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from app import app
 
 with app.test_client() as client:
@@ -7,3 +8,14 @@ with app.test_client() as client:
 
     print("Status:", res.status_code)
     print("Response:", res.get_json())
+=======
+from app import app
+
+with app.test_client() as client:
+    res = client.post("/api/student/summary", json={
+        "student_id": 2  # student1
+    })
+
+    print("Status:", res.status_code)
+    print("Response:", res.get_json())
+>>>>>>> cfc9b6af5e1d5697dd003ccf010269bd3f0df0de

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 
@@ -874,4 +875,882 @@
     </script>
 </body>
 
+=======
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Home | Smart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding-bottom: 100px;
+            /* Space for FAB */
+            background-image: radial-gradient(circle at 10% 10%, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        .top-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
+            padding: 15px 30px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .top-navbar a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .top-navbar a:hover {
+            color: white;
+        }
+
+        .dropdown {
+            margin-bottom: 0 !important;
+        }
+
+        .btn-logout {
+            background: #ef4444;
+            color: white !important;
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+        }
+
+        .page-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .stats-top-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card-new {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card-new .icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card-new .info p {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .stat-card-new .info h3 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .portal-sidebar {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px 20px;
+            backdrop-filter: blur(10px);
+            height: fit-content;
+        }
+
+        .portal-sidebar h3 {
+            color: #3b82f6;
+            margin-bottom: 20px;
+            font-size: 18px;
+            padding-left: 10px;
+        }
+
+        .portal-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .portal-link:hover,
+        .portal-link.active {
+            background: rgba(99, 102, 241, 0.9);
+            color: white;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stat-card.wide {
+            grid-column: span 2;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Chart Section */
+        .chart-box {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 24px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Lists */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .list-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            padding: 16px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.2s;
+        }
+
+        .list-item:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .item-text h4 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .item-text p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .risk-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* Floating Action Button (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            height: 60px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 15px 30px var(--primary-glow);
+            text-decoration: none;
+            z-index: 100;
+            transition: 0.3s;
+        }
+
+        .fab:hover {
+            background: #4f46e5;
+            transform: translateY(-5px);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal for Export/History */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 32px;
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .export-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-download {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* NEW LAYOUT STYLES MATCHING THE REFERENCE IMAGE */
+        .top-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
+            padding: 15px 30px;
+            background: #000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .top-navbar a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .top-navbar a:hover,
+        .top-navbar a.active {
+            color: white;
+        }
+
+        .btn-logout {
+            background: #ef4444;
+            color: white !important;
+            padding: 8px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #dc2626;
+        }
+
+        .page-header {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .stats-top-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card-new {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card-new .icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card-new .info p {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .stat-card-new .info h3 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .portal-sidebar {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px 20px;
+            backdrop-filter: blur(10px);
+            height: fit-content;
+        }
+
+        .portal-sidebar h3 {
+            color: #3b82f6;
+            margin-bottom: 20px;
+            font-size: 18px;
+            padding-left: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .portal-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .portal-link:hover,
+        .portal-link.active {
+            background: rgba(99, 102, 241, 0.9);
+            color: white;
+        }
+
+        /* Drop old sidebar styles so they don't block layout */
+        .sidebar {
+            display: none !important;
+        }
+
+        .header {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation Bar matching the dark Eventora reference -->
+    <div class="top-navbar">
+        <a href="#">Home</a>
+        <a href="#">Events</a>
+        <a href="faculty_home.html" class="active"><i data-lucide="monitor" style="width: 16px;"></i> Faculty
+            Dashboard</a>
+        <a href="#"><i data-lucide="bell" style="width: 16px;"></i></a>
+        <a href="#"><i data-lucide="settings" style="width: 16px;"></i></a>
+        <a href="#" style="margin-left: 10px;">
+            <i data-lucide="user-circle" style="width: 16px;"></i>
+            <span id="faculty-name-nav">Profile</span>
+            <i data-lucide="chevron-down" style="width: 14px;"></i>
+        </a>
+        <button class="btn-logout" onclick="window.location.href='login.html'">Logout</button>
+    </div>
+
+    <!-- Big Header -->
+    <div class="page-header">
+        <h1>
+            <i data-lucide="briefcase" style="width: 32px; height: 32px;"></i>
+            Faculty Dashboard
+        </h1>
+    </div>
+
+    <div class="main-container">
+        <!-- 3 Horizontal Stat Cards -->
+        <div class="stats-top-grid">
+            <div class="stat-card-new">
+                <div class="icon-box"><i data-lucide="calendar"></i></div>
+                <div class="info">
+                    <p>TOTAL SESSIONS</p>
+                    <h3 id="total-sessions">0</h3>
+                </div>
+            </div>
+            <div class="stat-card-new">
+                <div class="icon-box"><i data-lucide="users"></i></div>
+                <div class="info">
+                    <p>STUDENTS REGISTERED</p>
+                    <h3>0</h3>
+                </div>
+            </div>
+            <div class="stat-card-new">
+                <div class="icon-box"><i data-lucide="pie-chart"></i></div>
+                <div class="info">
+                    <p>AVG. ATTENDANCE</p>
+                    <h3 id="avg-attendance">0%</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 Column Layout -->
+        <div class="dashboard-layout">
+            <!-- Left Sidebar -->
+            <div class="portal-sidebar">
+                <h3>Faculty Portal</h3>
+                <!-- NOT included Performance Analytics based on user instruction -->
+                <a href="faculty_create_session.html" class="portal-link">
+                    <i data-lucide="plus-circle"></i> Start Attendance
+                </a>
+                <a href="#academic-tools" class="portal-link active">
+                    <i data-lucide="laptop"></i> Academic Tools
+                </a>
+            </div>
+
+            <!-- Right Content panel -->
+            <div class="portal-content">
+                <div class="portal-sidebar" style="margin-bottom: 30px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; margin-bottom: 25px;"
+                        id="academic-tools">
+                        <i data-lucide="laptop" style="color: #3b82f6;"></i>
+                        Academic Tools
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="stat-card"
+                            style="align-items: center; justify-content: center; padding: 45px 20px; cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.2);"
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='rgba(0,0,0,0.2)'"
+                            onclick="window.location.href='timetable.html'">
+                            <i data-lucide="calendar-check"
+                                style="width: 42px; height: 42px; margin-bottom: 15px; color: white;"></i>
+                            <h3 style="font-size: 19px; font-weight: 600;">My Timetable</h3>
+                        </div>
+                        <div class="stat-card"
+                            style="align-items: center; justify-content: center; padding: 45px 20px; cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.2);"
+                            onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                            onmouseout="this.style.background='rgba(0,0,0,0.2)'"
+                            onclick="window.location.href='faculty_create_session.html'">
+                            <i data-lucide="user-check"
+                                style="width: 42px; height: 42px; margin-bottom: 15px; color: white;"></i>
+                            <h3 style="font-size: 19px; font-weight: 600;">Daily Attendance</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing functionality elements below -->
+                <div class="chart-box">
+                    <div class="section-title">
+                        Attendance Trends
+                        <i data-lucide="trending-up" style="color: var(--success); width: 20px;"></i>
+                    </div>
+                    <canvas id="attendanceChart" height="200"></canvas>
+                </div>
+
+                <div class="section-title">
+                    Students At Risk (< 75%) <span style="font-size: 12px; color: var(--danger);">Top 5</span>
+                </div>
+                <div class="item-list" id="at-risk-list">
+                    <p style="text-align:center; color:#64748b; padding: 20px;">No students at risk. Great job!</p>
+                </div>
+
+                <div class="section-title" style="margin-top: 30px;">
+                    Today's Schedule
+                    <i data-lucide="calendar-days" style="color: var(--primary); width: 20px;"></i>
+                </div>
+                <div class="item-list" id="timetable-list" style="margin-bottom: 25px;">
+                    <p style="text-align:center; color:#64748b; padding: 20px;">No classes scheduled for today.</p>
+                </div>
+
+                <div class="section-title" style="margin-top: 30px; display: flex; justify-content: space-between;">
+                    Recent Sessions
+                    <a href="#" onclick="showHistory()"
+                        style="font-size: 12px; color: var(--primary); text-decoration: none;">View All</a>
+                </div>
+                <div class="item-list" id="recent-sessions-list">
+                    <!-- Dynamic data -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Session History</h3>
+                <button class="btn-close" onclick="hideHistory()"><i data-lucide="x"></i></button>
+            </div>
+            <div id="history-container">
+                <!-- Rows -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + "/api";
+        const token = localStorage.getItem("access_token");
+        const userName = localStorage.getItem("user_name") || "Professor";
+
+        if (!token) window.location.href = 'login.html';
+
+        document.getElementById('faculty-name-nav').innerText = userName;
+        lucide.createIcons();
+
+        async function loadTimetable() {
+            try {
+                const res = await fetch(`${API_BASE}/faculty/timetable`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const list = document.getElementById('timetable-list');
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const today = days[new Date().getDay()];
+                    const todayClasses = data.timetable.filter(t => t.day_of_week === today);
+
+                    if (todayClasses.length > 0) {
+                        list.innerHTML = '';
+                        todayClasses.forEach(t => {
+                            list.innerHTML += `
+                                <div class="list-item" onclick="startClassFromTimetable('${t.branch}', '${t.semester}', '${t.subject_name}')">
+                                    <div class="item-info">
+                                        <div class="item-icon"><i data-lucide="clock"></i></div>
+                                        <div class="item-text">
+                                            <h4>${t.subject_name}</h4>
+                                            <p>${t.start_time} - ${t.end_time} • ${t.branch} ${t.semester}</p>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="chevron-right" style="color: #64748b; width: 16px;"></i>
+                                </div>
+                            `;
+                        });
+                        lucide.createIcons();
+                    }
+                }
+            } catch (e) { console.error("Timetable failed", e); }
+        }
+
+        function startClassFromTimetable(branch, sem, sub) {
+            localStorage.setItem('auto_fill_branch', branch);
+            localStorage.setItem('auto_fill_semester', sem);
+            localStorage.setItem('auto_fill_subject', sub);
+            window.location.href = 'faculty_create_session.html';
+        }
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            lucide.createIcons();
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/faculty/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Update Stats
+                    document.getElementById('total-sessions').innerText = data.stats.total_sessions;
+                    document.getElementById('avg-attendance').innerText = data.stats.avg_attendance + "%";
+
+                    // Update Risk List
+                    const riskList = document.getElementById('at-risk-list');
+                    if (data.at_risk_students.length > 0) {
+                        riskList.innerHTML = '';
+                        data.at_risk_students.forEach(s => {
+                            riskList.innerHTML += `
+                                <div class="list-item">
+                                    <div class="item-info">
+                                        <div class="item-icon"><i data-lucide="user"></i></div>
+                                        <div class="item-text">
+                                            <h4>${s.name}</h4>
+                                            <p>${s.roll_no}</p>
+                                        </div>
+                                    </div>
+                                    <div class="risk-badge">${Math.round(s.percentage)}%</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    // Update Recent Sessions
+                    const recentList = document.getElementById('recent-sessions-list');
+                    recentList.innerHTML = '';
+                    data.recent_sessions.forEach(s => {
+                        const date = new Date(s.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        recentList.innerHTML += `
+                            <div class="list-item">
+                                <div class="item-info">
+                                    <div class="item-icon"><i data-lucide="book-open"></i></div>
+                                    <div class="item-text">
+                                        <h4>${s.subject}</h4>
+                                        <p>${s.branch} ${s.semester} • ${date}</p>
+                                    </div>
+                                </div>
+                                <div style="text-align: right">
+                                    <div style="font-weight: 700; font-size: 14px;">${s.count}</div>
+                                    <div style="font-size: 10px; color: #94a3b8;">Present</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    initChart(data.recent_sessions);
+                    lucide.createIcons();
+                }
+            } catch (e) { console.error("Load failed", e); }
+        }
+
+        function initChart(sessions) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            const labels = [...sessions].reverse().map(s => new Date(s.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            const counts = [...sessions].reverse().map(s => s.count);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Attendance Count',
+                        data: counts,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#64748b' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#64748b' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function showHistory() {
+            document.getElementById('historyModal').style.display = 'flex';
+            // In a real app, populate with export buttons
+        }
+
+        function hideHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        loadDashboard();
+        loadTimetable();
+    </script>
+</body>
+
+>>>>>>> cfc9b6af5e1d5697dd003ccf010269bd3f0df0de
 </html>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 
@@ -248,4 +249,256 @@
   </script>
 </body>
 
+=======
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Student - Scan Attendance</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      text-align: center;
+      background: var(--bg);
+      color: white;
+      padding-top: 20px;
+      background-image: radial-gradient(circle at 10% 10%, #1e1b4b 0%, #0f172a 100%);
+      min-height: 100vh;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      color: white;
+      padding: 10px;
+      border-radius: 12px;
+      text-decoration: none;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 400px;
+      min-height: 300px;
+      margin: 20px auto;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 2px solid var(--primary);
+      background: #000;
+      position: relative;
+    }
+
+    #reader video {
+      object-fit: cover !important;
+    }
+
+    .status-card {
+      padding: 20px;
+      border-radius: 24px;
+      margin: 20px;
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-action {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    #status-msg {
+      margin-top: 20px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .error-alert {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 10px 20px;
+      font-size: 14px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header-nav">
+    <a href="student_home.html" class="back-btn"><i data-lucide="chevron-left"></i></a>
+    <h2 style="margin-left: 15px;">Smart Attendance</h2>
+  </div>
+
+  <div id="secure-warning" class="error-alert">
+    ⚠️ Camera requires HTTPS or Localhost. Use a tunnel or check browser settings.
+  </div>
+
+  <div class="status-card">
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 5px;">Step 1: Grant Camera & GPS</p>
+    <p id="status-msg">Click below to start scanning</p>
+    <button id="startBtn" class="btn-action" onclick="startScanner()">
+      <i data-lucide="camera" style="display:inline-block; vertical-align:middle; margin-right:8px; width:20px;"></i>
+      Initialize Camera
+    </button>
+  </div>
+
+  <div id="reader" style="display:none;"></div>
+
+  <div id="controls" style="display:none; margin-top:20px;">
+    <button id="torchBtn" class="btn-action" style="background:#334155;" onclick="toggleTorch()">
+      🔦 Toggle Flash
+    </button>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const API_BASE = window.location.origin + "/api";
+    const TOKEN = localStorage.getItem("access_token");
+    let html5QrCode;
+    let isScannerRunning = false;
+    let isTorchOn = false;
+
+    // Check for secure context
+    if (!window.isSecureContext && window.location.hostname !== "localhost") {
+      document.getElementById('secure-warning').style.display = 'block';
+    }
+
+    async function startScanner() {
+      const statusMsg = document.getElementById('status-msg');
+      const readerDiv = document.getElementById('reader');
+      const startBtn = document.getElementById('startBtn');
+
+      statusMsg.innerText = "Starting camera...";
+      readerDiv.style.display = 'block';
+
+      try {
+        if (html5QrCode) {
+          await html5QrCode.stop().catch(() => { });
+        }
+
+        html5QrCode = new Html5Qrcode("reader");
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          onScanSuccess
+        );
+
+        isScannerRunning = true;
+        startBtn.style.display = 'none';
+        document.getElementById('controls').style.display = 'block';
+        statusMsg.innerText = "Looking for QR code...";
+        statusMsg.style.color = "var(--primary)";
+
+      } catch (err) {
+        console.error(err);
+        statusMsg.innerHTML = `Camera failed: ${err}<br><button onclick="startScanner()" class="btn-action" style="background:#ef4444; margin-top:10px">Try Again</button>`;
+      }
+    }
+
+    function onScanSuccess(qrPayload) {
+      document.getElementById("status-msg").innerText = "QR Detected! Processing...";
+      document.getElementById("status-msg").style.color = "#10b981";
+
+      // Stop scanner immediately
+      if (isScannerRunning) {
+        html5QrCode.stop().then(() => {
+          isScannerRunning = false;
+          document.getElementById('reader').style.display = 'none';
+          requestLocationAndMark(qrPayload);
+        });
+      }
+    }
+
+    function requestLocationAndMark(qrPayload) {
+      if (!navigator.geolocation) {
+        alert("GPS not supported.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => markAttendance(qrPayload, pos.coords.latitude, pos.coords.longitude),
+        (err) => {
+          alert("GPS access denied. You must enable location to mark attendance.");
+          location.reload();
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+
+    function markAttendance(qrPayload, lat, lng) {
+      const url = `${API_BASE}/attendance`;
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify({
+          qr_payload: qrPayload,
+          latitude: lat,
+          longitude: lng
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert("✅ Attendance Marked Successfully!");
+            window.location.href = "student_home.html";
+          } else {
+            alert("❌ Failed: " + data.message);
+            location.reload();
+          }
+        })
+        .catch((err) => {
+          alert(`Network Error!\nURL: ${url}\nError: ${err.message}\nCheck if your phone can reach the server.`);
+          location.reload();
+        });
+    }
+
+    async function toggleTorch() {
+      try {
+        isTorchOn = !isTorchOn;
+        await html5QrCode.applyVideoConstraints({
+          advanced: [{ torch: isTorchOn }]
+        });
+      } catch (err) {
+        console.warn("Torch not supported");
+      }
+    }
+  </script>
+</body>
+
+>>>>>>> cfc9b6af5e1d5697dd003ccf010269bd3f0df0de
 </html>

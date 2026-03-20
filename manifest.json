@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "QR Attendance System",
   "short_name": "Attendance",
@@ -14,4 +15,22 @@
       "purpose": "any maskable"
     }
   ]
+=======
+{
+  "name": "QR Attendance System",
+  "short_name": "Attendance",
+  "description": "Smart QR-based Attendance with Geofencing",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+>>>>>>> cfc9b6af5e1d5697dd003ccf010269bd3f0df0de
 }
